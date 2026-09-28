@@ -14,6 +14,7 @@
 - Before trusting any per-day number, check how `ts` is parsed: exports mix ISO 8601 with `DD/MM/YYYY HH:mm`, and dropping the odd rows silently shifts the daily curve. (E1)
 - Return 410 with an HTML page for expired links, not JSON, and record no click: the visitor is a person mid-redirect, and expired traffic is not traffic. (E2)
 - Validate at the edge: `expires_at` is checked in `validate.ts` like `target_url`; the store never sees a bad value. (E2)
+- Whatever is normalised on write must be normalised on read: slugs are lowercased in `validate.ts` and looked up lowercased in `redirect.ts`; one test hits both spellings. (E4, the reviewer's top finding)
 
 ## Working agreement
 - Plans are files: options → `SPEC.md` → `PLAN.md` before code, on anything bigger than a one-line fix.

@@ -10,6 +10,21 @@ export function isValidSlug(slug: string): boolean {
   return SLUG_RE.test(slug);
 }
 
+/** Slugs are case-insensitive: stored and looked up in lowercase. */
+export function normalizeSlug(slug: string): string {
+  return slug.toLowerCase();
+}
+
+/** Validates a user-chosen slug. Absent is fine: one will be generated. */
+export function validateSlug(value: unknown): string | null {
+  if (value === undefined || value === null) return null;
+  if (typeof value !== "string" || !isValidSlug(value)) {
+    return "slug must be 3–32 characters: letters, digits, - or _";
+  }
+  if (RESERVED.includes(normalizeSlug(value))) return `slug is reserved: ${value}`;
+  return null;
+}
+
 /** Returns an error message, or null when the value is acceptable. */
 export function validateTargetUrl(value: unknown): string | null {
   if (typeof value !== "string") return "target_url is required";

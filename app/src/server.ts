@@ -3,19 +3,31 @@ import { createServer, type IncomingMessage, type Server, type ServerResponse } 
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
 import { createLink, listLinks, sendJson, stats } from "./api/links.js";
+import { limitFromEnv, RateLimiter } from "./ratelimit.js";
 import { redirect } from "./redirect.js";
 import { Store } from "./store.js";
 
 const DEFAULT_PORT = 3000;
 const WEB_DIR = join(dirname(fileURLToPath(import.meta.url)), "web");
+const REPO_ROOT = join(dirname(fileURLToPath(import.meta.url)), "..", "..");
 
-function sendPage(res: ServerResponse, file: string) {
-  const html = readFileSync(join(WEB_DIR, file), "utf8");
+function sendHtmlFile(res: ServerResponse, absolutePath: string) {
+  const html = readFileSync(absolutePath, "utf8");
   res.writeHead(200, { "content-type": "text/html; charset=utf-8" });
   res.end(html);
 }
 
-type Handler = (req: IncomingMessage, res: ServerResponse, url: URL) => void | Promise<void>;
+function sendPage(res: ServerResponse, file: string) {
+  return sendHtmlFile(res, join(WEB_DIR, file));
+}
+
+export interface AppOptions {
+  /** POST /links per minute per client IP. Default: RATE_LIMIT_PER_MINUTE env, else 10. */
+  rateLimitPerMinute?: number;
+}
+
+/** A handler writes the response itself; whatever it returns is ignored. */
+type Handler = (req: IncomingMessage, res: ServerResponse, url: URL) => unknown;
 
 interface Route {
   method: "GET" | "POST";
@@ -24,19 +36,22 @@ interface Route {
 }
 
 /** The fixed routes. Every GET route also answers HEAD; another method on one of these paths is a 405. */
-function routes(store: Store): Route[] {
+function routes(store: Store, limiter: RateLimiter): Route[] {
   return [
     { method: "GET", path: "/", handler: (_req, res) => sendPage(res, "index.html") },
     { method: "GET", path: "/links", handler: (_req, res) => sendPage(res, "links.html") },
-    { method: "POST", path: "/links", handler: (req, res) => createLink(req, res, store) },
+    { method: "POST", path: "/links", handler: (req, res) => createLink(req, res, store, limiter) },
     { method: "GET", path: "/api/links", handler: (req, res) => listLinks(req, res, store) },
     { method: "GET", path: "/api/stats", handler: (req, res, url) => stats(req, res, store, url) },
+    // The E1 dashboard, served live (issue #6). It fetches /api/stats on load.
+    { method: "GET", path: "/stats", handler: (_req, res) => sendHtmlFile(res, join(REPO_ROOT, "dashboard", "index.html")) },
   ];
 }
 
 /** Build the http server around a store. Tests call this with a throwaway store. */
-export function createApp(store: Store): Server {
-  const table = routes(store);
+export function createApp(store: Store, options: AppOptions = {}): Server {
+  const limiter = new RateLimiter(options.rateLimitPerMinute ?? limitFromEnv());
+  const table = routes(store, limiter);
   return createServer(async (req: IncomingMessage, res: ServerResponse) => {
     const url = new URL(req.url ?? "/", "http://localhost");
     const method = req.method ?? "GET";

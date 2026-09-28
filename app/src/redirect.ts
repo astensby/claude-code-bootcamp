@@ -1,6 +1,6 @@
 import type { IncomingMessage, ServerResponse } from "node:http";
 import type { Store } from "./store.js";
-import { isExpired, isValidSlug, SLUG_RE } from "./validate.js";
+import { isExpired, isValidSlug, normalizeSlug, SLUG_RE } from "./validate.js";
 
 function deviceOf(userAgent: any): string {
   const ua = userAgent.toLowerCase();
@@ -22,7 +22,7 @@ function referrerOf(referer: string | undefined): string {
 export function redirect(req: IncomingMessage, res: ServerResponse, store: Store, slug: string) {
   if (!isValidSlug(slug)) return notFound(res);
 
-  const link = store.get(slug);
+  const link = store.get(normalizeSlug(slug));
   if (!link) return notFound(res);
   if (isExpired(link)) return gone(res);
 
@@ -37,7 +37,7 @@ export function redirect(req: IncomingMessage, res: ServerResponse, store: Store
     });
   }
 
-  res.writeHead(302, { location: store.get(slug)!.target_url });
+  res.writeHead(302, { location: store.get(normalizeSlug(slug))!.target_url });
   res.end();
 }
 

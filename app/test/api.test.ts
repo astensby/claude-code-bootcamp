@@ -49,6 +49,72 @@ describe("POST /links", () => {
   });
 });
 
+describe("POST /links with a custom slug (issue #2)", () => {
+  it("returns 201 with the chosen slug", async () => {
+    const res = await postJson(app.base, "/links", {
+      target_url: "https://example.com/a",
+      slug: "summer-sale",
+    });
+    expect(res.status).toBe(201);
+    expect((await res.json()).slug).toBe("summer-sale");
+  });
+
+  it("returns 400 for a slug that breaks the rules or is reserved", async () => {
+    for (const slug of ["ab", "has space", "a".repeat(33), "api", "stats"]) {
+      const res = await postJson(app.base, "/links", { target_url: "https://example.com/a", slug });
+      expect(res.status, slug).toBe(400);
+    }
+  });
+
+  it("returns 409 for a slug that is taken", async () => {
+    await postJson(app.base, "/links", { target_url: "https://example.com/a", slug: "taken1" });
+    const res = await postJson(app.base, "/links", {
+      target_url: "https://example.com/b",
+      slug: "taken1",
+    });
+    expect(res.status).toBe(409);
+  });
+
+  it("resolves /MyLink and /mylink to the same target", async () => {
+    await postJson(app.base, "/links", { target_url: "https://example.com/case", slug: "MyLink" });
+    const upper = await fetch(`${app.base}/MyLink`, { redirect: "manual" });
+    const lower = await fetch(`${app.base}/mylink`, { redirect: "manual" });
+    expect(upper.status).toBe(302);
+    expect(lower.status).toBe(302);
+    expect(upper.headers.get("location")).toBe("https://example.com/case");
+    expect(lower.headers.get("location")).toBe("https://example.com/case");
+    const taken = await postJson(app.base, "/links", {
+      target_url: "https://example.com/x",
+      slug: "MYLINK",
+    });
+    expect(taken.status).toBe(409);
+  });
+});
+
+describe("rate limit on POST /links (issue #4)", () => {
+  it("returns 429 with Retry-After after N creates in a minute, and leaves GETs alone", async () => {
+    const limited = await startApp({ rateLimitPerMinute: 2 });
+    try {
+      const codes: number[] = [];
+      for (let i = 0; i < 3; i++) {
+        codes.push(
+          (await postJson(limited.base, "/links", { target_url: `https://example.com/${i}` }))
+            .status,
+        );
+      }
+      expect(codes).toEqual([201, 201, 429]);
+      const blocked = await postJson(limited.base, "/links", {
+        target_url: "https://example.com/x",
+      });
+      expect(blocked.status).toBe(429);
+      expect(Number(blocked.headers.get("retry-after"))).toBeGreaterThanOrEqual(1);
+      expect((await fetch(`${limited.base}/api/links`)).status).toBe(200);
+    } finally {
+      await limited.close();
+    }
+  });
+});
+
 describe("GET /:slug", () => {
   it("redirects with 302 and records the click", async () => {
     const created = await (
@@ -129,6 +195,24 @@ describe("GET /api/stats", () => {
       { day: "2026-09-02", clicks: 2 },
     ]);
     expect(s.by_referrer[0]).toEqual({ referrer: "linkedin.com", clicks: 2 });
+  });
+
+  it("carries the weekday, device and country series the dashboard draws (issue #6)", async () => {
+    seed();
+    const s = await (await fetch(`${app.base}/api/stats`)).json();
+    expect(s.by_weekday.map((r: { name: string }) => r.name)).toEqual([
+      "Mon",
+      "Tue",
+      "Wed",
+      "Thu",
+      "Fri",
+      "Sat",
+      "Sun",
+    ]);
+    expect(s.by_weekday[1]).toEqual({ name: "Tue", clicks: 2 });
+    expect(s.by_weekday[2]).toEqual({ name: "Wed", clicks: 2 });
+    expect(s.by_device).toEqual([{ name: "desktop", clicks: 4 }]);
+    expect(s.by_country).toEqual([{ name: "NO", clicks: 4 }]);
   });
 
   it("filters with ?since=", async () => {
@@ -226,10 +310,12 @@ describe("pages", () => {
     expect(stats.total_clicks).toBe(0);
   });
 
-  // Placeholder: issue #6 (serve the dashboard at /stats) replaces this test.
-  it("has no /stats page", async () => {
+  it("serves the dashboard at /stats (issue #6)", async () => {
     const res = await fetch(`${app.base}/stats`, { redirect: "manual" });
-    expect(res.status).toBe(404);
+    expect(res.status).toBe(200);
+    const html = await res.text();
+    expect(html).toContain("click dashboard");
+    expect(html).toContain('fetch("/api/stats")');
   });
 });
 

@@ -154,12 +154,12 @@
     <h2>Assumptions</h2>
     <ol>
       <li>All timestamps are UTC. Days and weekdays are cut at UTC midnight, not local time.</li>
-      <li>About 2% of <code>ts</code> values (<span id="legacy-count"></span> rows) use <code>DD/MM/YYYY HH:mm</code> instead of ISO 8601. They were parsed as day-first UTC and kept, not dropped.</li>
+      <li>Timestamps are normalised to ISO 8601 UTC when <code>npm run seed</code> loads the export (it accepts both formats); the page trusts what <code>/api/stats</code> returns.</li>
       <li><code>newsletter</code> and <code>direct</code> are not hostnames: they mean tracked mail and unknown source. They are shown as referrers anyway.</li>
       <li>A click is a row in <code>clicks.csv</code>. No bot filtering, no de-duplication.</li>
       <li>"Top links" counts every click in the window regardless of when the link was created, so an old link can outrank a new one that is doing better per day.</li>
       <li>The window is twelve full weeks, Monday to Sunday, so every weekday appears exactly twelve times in the weekday chart.</li>
-      <li>Numbers are pre-computed by <code>dashboard/build.mjs</code> from <code>data/</code>; rebuild after <code>npm run gen-data</code>.</li>
+      <li>Numbers are whatever the store holds: <code>npm run seed</code> loads <code>data/</code>, and every redirect since then adds a click.</li>
     </ol>
   </section>
 </main>
@@ -170,11 +170,52 @@
  *   1. palette lives in CSS custom properties (--accent, --ink-2, --grid …) — never hex in JS
  *   2. one <section class="card"> per chart, with an <h2> and a <p class="sub">
  *   3. one draw<Name>(el, data) function per chart, building inline SVG with el()/svg()
- *   4. all numbers come from the DATA object below (built by build.mjs, no fetch)
+ *   4. all numbers come from /api/stats (+ /api/links), fetched once by load() into DATA
  *   5. render() calls every draw function in order — register new charts there
  *   6. text uses the ink tokens; only marks use --accent
  */
-const DATA = {"generated":"2026-09-28","window":{"from":"2026-06-29","to":"2026-09-20","days":84},"totals":{"clicks":50000,"links":300,"links_with_clicks":300,"top10_share":0.32518,"campaigns":20,"avg_per_day":595,"busiest_day":"2026-08-25","busiest_clicks":2400,"top_referrer":"linkedin.com","top_referrer_share":0.32004,"legacy_ts_rows":1014},"top_links":[{"slug":"damrv6","target_url":"https://blog.example.com/partners","clicks":4451},{"slug":"4d9u7p","target_url":"https://status.example.com/docs/getting-started","clicks":2610},{"slug":"y96ptj","target_url":"https://learn.example.com/changelog","clicks":1755},{"slug":"e9fyyh","target_url":"https://blog.example.com/compare","clicks":1360},{"slug":"f56trc","target_url":"https://events.example.com/compare","clicks":1209},{"slug":"3ne5ma","target_url":"https://learn.example.com/careers/backend","clicks":1160},{"slug":"fbyyji","target_url":"https://help.example.com/roadmap?utm_campaign=cmp-20","clicks":948},{"slug":"e9pamc","target_url":"https://status.example.com/changelog","clicks":933},{"slug":"3vvnzk","target_url":"https://events.example.com/webinar/agents-in-production?utm_campaign=cmp-09","clicks":930},{"slug":"j9d4gr","target_url":"https://app.example.com/release/2026-08","clicks":903}],"by_day":[{"day":"2026-06-29","clicks":527},{"day":"2026-06-30","clicks":636},{"day":"2026-07-01","clicks":696},{"day":"2026-07-02","clicks":569},{"day":"2026-07-03","clicks":446},{"day":"2026-07-04","clicks":232},{"day":"2026-07-05","clicks":249},{"day":"2026-07-06","clicks":572},{"day":"2026-07-07","clicks":603},{"day":"2026-07-08","clicks":655},{"day":"2026-07-09","clicks":607},{"day":"2026-07-10","clicks":463},{"day":"2026-07-11","clicks":241},{"day":"2026-07-12","clicks":263},{"day":"2026-07-13","clicks":562},{"day":"2026-07-14","clicks":640},{"day":"2026-07-15","clicks":637},{"day":"2026-07-16","clicks":620},{"day":"2026-07-17","clicks":491},{"day":"2026-07-18","clicks":246},{"day":"2026-07-19","clicks":272},{"day":"2026-07-20","clicks":556},{"day":"2026-07-21","clicks":657},{"day":"2026-07-22","clicks":694},{"day":"2026-07-23","clicks":584},{"day":"2026-07-24","clicks":429},{"day":"2026-07-25","clicks":243},{"day":"2026-07-26","clicks":266},{"day":"2026-07-27","clicks":576},{"day":"2026-07-28","clicks":671},{"day":"2026-07-29","clicks":685},{"day":"2026-07-30","clicks":577},{"day":"2026-07-31","clicks":448},{"day":"2026-08-01","clicks":227},{"day":"2026-08-02","clicks":276},{"day":"2026-08-03","clicks":579},{"day":"2026-08-04","clicks":645},{"day":"2026-08-05","clicks":666},{"day":"2026-08-06","clicks":603},{"day":"2026-08-07","clicks":459},{"day":"2026-08-08","clicks":220},{"day":"2026-08-09","clicks":283},{"day":"2026-08-10","clicks":592},{"day":"2026-08-11","clicks":646},{"day":"2026-08-12","clicks":659},{"day":"2026-08-13","clicks":636},{"day":"2026-08-14","clicks":461},{"day":"2026-08-15","clicks":258},{"day":"2026-08-16","clicks":262},{"day":"2026-08-17","clicks":542},{"day":"2026-08-18","clicks":654},{"day":"2026-08-19","clicks":668},{"day":"2026-08-20","clicks":566},{"day":"2026-08-21","clicks":478},{"day":"2026-08-22","clicks":222},{"day":"2026-08-23","clicks":241},{"day":"2026-08-24","clicks":2070},{"day":"2026-08-25","clicks":2400},{"day":"2026-08-26","clicks":2362},{"day":"2026-08-27","clicks":2149},{"day":"2026-08-28","clicks":1695},{"day":"2026-08-29","clicks":842},{"day":"2026-08-30","clicks":876},{"day":"2026-08-31","clicks":606},{"day":"2026-09-01","clicks":650},{"day":"2026-09-02","clicks":673},{"day":"2026-09-03","clicks":553},{"day":"2026-09-04","clicks":434},{"day":"2026-09-05","clicks":234},{"day":"2026-09-06","clicks":268},{"day":"2026-09-07","clicks":537},{"day":"2026-09-08","clicks":640},{"day":"2026-09-09","clicks":717},{"day":"2026-09-10","clicks":588},{"day":"2026-09-11","clicks":433},{"day":"2026-09-12","clicks":262},{"day":"2026-09-13","clicks":252},{"day":"2026-09-14","clicks":550},{"day":"2026-09-15","clicks":650},{"day":"2026-09-16","clicks":643},{"day":"2026-09-17","clicks":580},{"day":"2026-09-18","clicks":412},{"day":"2026-09-19","clicks":208},{"day":"2026-09-20","clicks":260}],"by_weekday":[{"name":"Mon","clicks":8269},{"name":"Tue","clicks":9492},{"name":"Wed","clicks":9755},{"name":"Thu","clicks":8632},{"name":"Fri","clicks":6649},{"name":"Sat","clicks":3435},{"name":"Sun","clicks":3768}],"by_referrer":[{"name":"linkedin.com","clicks":16002},{"name":"newsletter","clicks":13436},{"name":"google.com","clicks":6964},{"name":"direct","clicks":4585},{"name":"t.co","clicks":1787},{"name":"slack.com","clicks":1295},{"name":"facebook.com","clicks":1026},{"name":"news.ycombinator.com","clicks":868},{"name":"other","clicks":4037,"other":true}],"by_device":[{"name":"mobile","clicks":26011},{"name":"desktop","clicks":20909},{"name":"tablet","clicks":3080}],"by_country":[{"name":"NO","clicks":29042},{"name":"SE","clicks":4570},{"name":"DK","clicks":3520},{"name":"DE","clicks":2508},{"name":"GB","clicks":2494},{"name":"US","clicks":2428},{"name":"NL","clicks":1509},{"name":"FI","clicks":1439},{"name":"other","clicks":2490,"other":true}]};
+let DATA = null; // filled by load() from /api/stats and /api/links
+
+/* Fold a series to its top N rows plus one "other" row, the way the CSV version did. */
+function fold(rows, key, top = 8) {
+  const sorted = rows.map((r) => ({ name: r[key], clicks: r.clicks })).sort((a, b) => b.clicks - a.clicks);
+  const head = sorted.slice(0, top);
+  const rest = sorted.slice(top).reduce((sum, r) => sum + r.clicks, 0);
+  return rest > 0 ? [...head, { name: "other", clicks: rest, other: true }] : head;
+}
+
+async function load() {
+  const [stats, links] = await Promise.all([
+    fetch("/api/stats").then((r) => r.json()),
+    fetch("/api/links").then((r) => r.json()),
+  ]);
+  const clicks = stats.total_clicks;
+  const days = stats.by_day;
+  const busiest = days.reduce((a, b) => (b.clicks > a.clicks ? b : a), { day: "—", clicks: 0 });
+  const topRef = stats.by_referrer[0] ?? { referrer: "—", clicks: 0 };
+  const top10 = stats.top_links.reduce((sum, r) => sum + r.clicks, 0);
+  DATA = {
+    generated: new Date().toISOString().slice(0, 10),
+    window: { from: days[0]?.day ?? "—", to: days[days.length - 1]?.day ?? "—", days: days.length },
+    totals: {
+      clicks,
+      links: links.length,
+      top10_share: clicks ? top10 / clicks : 0,
+      avg_per_day: days.length ? Math.round(clicks / days.length) : 0,
+      busiest_day: busiest.day,
+      busiest_clicks: busiest.clicks,
+      top_referrer: topRef.referrer,
+      top_referrer_share: clicks ? topRef.clicks / clicks : 0,
+    },
+    top_links: stats.top_links,
+    by_day: days,
+    by_weekday: stats.by_weekday,
+    by_referrer: fold(stats.by_referrer, "referrer"),
+    by_device: stats.by_device,
+    by_country: fold(stats.by_country, "name"),
+  };
+  render();
+}
 
 const fmt = (n) => n.toLocaleString("en-US");
 const pct = (x) => (x * 100).toFixed(0) + "%";
@@ -365,8 +406,7 @@ function drawTable(root, rows, cols) {
 /* ---- render --------------------------------------------------------- */
 function render() {
   document.getElementById("subtitle").textContent =
-    DATA.window.from + " to " + DATA.window.to + " · built " + DATA.generated;
-  document.getElementById("legacy-count").textContent = fmt(DATA.totals.legacy_ts_rows);
+    DATA.window.from + " to " + DATA.window.to + " · live from /api/stats, loaded " + DATA.generated;
   drawTiles(document.getElementById("tiles"), DATA.totals);
   drawByDay(document.getElementById("by-day"), DATA.by_day);
   drawTopLinks(document.getElementById("top-links"), DATA.top_links);
@@ -385,7 +425,9 @@ function render() {
     { label: "Share", get: (r) => pct(r.clicks / DATA.totals.clicks), num: true },
   ]);
 }
-render();
+load().catch((err) => {
+  document.getElementById("subtitle").textContent = "Could not load /api/stats: " + err.message;
+});
 </script>
 </body>
 </html>

@@ -1,10 +1,13 @@
 import type { IncomingMessage, ServerResponse } from "node:http";
+import type { RateLimiter } from "../ratelimit.js";
 import type { Click, Link, Store } from "../store.js";
 import {
   generateSlug,
   isExpired,
   isValidSlug,
+  normalizeSlug,
   validateExpiresAt,
+  validateSlug,
   validateTargetUrl,
 } from "../validate.js";
 
@@ -49,8 +52,13 @@ export async function readJsonBody(req: IncomingMessage): Promise<Record<string,
   return parsed as Record<string, unknown>;
 }
 
-/** POST /links — create a short link. The slug is always generated. */
-export async function createLink(req: IncomingMessage, res: ServerResponse, store: Store) {
+/** POST /links — create a short link. Rate-limited per client IP; slug user-chosen (lowercased) or generated. */
+export async function createLink(
+  req: IncomingMessage,
+  res: ServerResponse,
+  store: Store,
+  limiter: RateLimiter,
+) {
   let body: any;
   try {
     body = await readJsonBody(req);
@@ -59,14 +67,31 @@ export async function createLink(req: IncomingMessage, res: ServerResponse, stor
     return sendJson(res, 400, { error: "body must be valid JSON" });
   }
 
-  const problem = validateTargetUrl((body as any).target_url);
+  const verdict = limiter.hit(req.socket.remoteAddress ?? "unknown");
+  if (!verdict.allowed) {
+    res.writeHead(429, {
+      "content-type": "application/json; charset=utf-8",
+      "retry-after": String(verdict.retryAfterSec),
+    });
+    return res.end(
+      JSON.stringify({ error: "too many links created from this address, try again later" }),
+    );
+  }
+
+  const problem = validateTargetUrl((body as any).target_url) ?? validateSlug(body.slug);
   if (problem) return sendJson(res, 400, { error: problem });
 
   const expiresProblem = validateExpiresAt(body.expires_at);
   if (expiresProblem) return sendJson(res, 400, { error: expiresProblem });
 
-  let slug = generateSlug();
-  while (store.has(slug)) slug = generateSlug();
+  let slug: string;
+  if (typeof body.slug === "string") {
+    slug = normalizeSlug(body.slug);
+    if (store.has(slug)) return sendJson(res, 409, { error: `slug is already taken: ${slug}` });
+  } else {
+    slug = generateSlug();
+    while (store.has(slug)) slug = generateSlug();
+  }
 
   const link: Link = {
     slug,
@@ -93,6 +118,17 @@ interface Stats {
   top_links: { slug: string; target_url: string; clicks: number; expired: boolean }[];
   by_day: { day: string; clicks: number }[];
   by_referrer: { referrer: string; clicks: number }[];
+  by_weekday: { name: string; clicks: number }[];
+  by_device: { name: string; clicks: number }[];
+  by_country: { name: string; clicks: number }[];
+}
+
+const WEEKDAYS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
+
+function countRows(counts: Map<string, number>) {
+  return [...counts.entries()]
+    .sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]))
+    .map(([name, clicks]) => ({ name, clicks }));
 }
 
 /** GET /api/stats?since=<iso> — aggregate clicks, optionally from a point in time. */
@@ -112,6 +148,9 @@ export function stats(_req: IncomingMessage, res: ServerResponse, store: Store, 
   const perSlug = new Map<string, number>();
   const perDay = new Map<string, number>();
   const perReferrer = new Map<string, number>();
+  const perWeekday = [0, 0, 0, 0, 0, 0, 0]; // Mon..Sun
+  const perDevice = new Map<string, number>();
+  const perCountry = new Map<string, number>();
   let total = 0;
 
   for (const click of store.clicks()) {
@@ -121,6 +160,9 @@ export function stats(_req: IncomingMessage, res: ServerResponse, store: Store, 
     const day = click.ts.slice(0, 10);
     perDay.set(day, (perDay.get(day) ?? 0) + 1);
     perReferrer.set(click.referrer, (perReferrer.get(click.referrer) ?? 0) + 1);
+    perWeekday[(new Date(click.ts).getUTCDay() + 6) % 7]++;
+    perDevice.set(click.device, (perDevice.get(click.device) ?? 0) + 1);
+    perCountry.set(click.country, (perCountry.get(click.country) ?? 0) + 1);
   }
 
   const top_links = [...perSlug.entries()]
@@ -139,6 +181,14 @@ export function stats(_req: IncomingMessage, res: ServerResponse, store: Store, 
     .sort((a: any, b: any) => b[1] - a[1] || a[0].localeCompare(b[0]))
     .map(([referrer, clicks]) => ({ referrer, clicks }));
 
-  const out: Stats = { total_clicks: total, top_links, by_day, by_referrer };
+  const out: Stats = {
+    total_clicks: total,
+    top_links,
+    by_day,
+    by_referrer,
+    by_weekday: WEEKDAYS.map((name, i) => ({ name, clicks: perWeekday[i] })),
+    by_device: countRows(perDevice),
+    by_country: countRows(perCountry),
+  };
   return sendJson(res, 200, out);
 }
