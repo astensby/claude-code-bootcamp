@@ -14,6 +14,15 @@ export function isValidSlug(slug: string): boolean {
 export function validateTargetUrl(value: unknown): string | null {
   if (typeof value !== "string") return "target_url is required";
   if (value.trim() === "") return "target_url is required";
+  let url: URL;
+  try {
+    url = new URL(value.trim());
+  } catch {
+    return "target_url must be an absolute http(s) URL";
+  }
+  if (url.protocol !== "http:" && url.protocol !== "https:") {
+    return "target_url must be an absolute http(s) URL";
+  }
   return null;
 }
 

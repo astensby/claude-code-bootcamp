@@ -46,6 +46,13 @@ describe("expires_at", () => {
     expect(validateExpiresAt(42, now)).toMatch(/ISO 8601/);
   });
 
+  it("treats the boundary instant as expired: a link is gone at its expires_at, not after", () => {
+    const t = "2026-09-01T12:00:00Z";
+    expect(isExpired({ expires_at: t }, Date.parse(t))).toBe(true);
+    expect(isExpired({ expires_at: t }, Date.parse(t) - 1)).toBe(false);
+    expect(validateExpiresAt(t, Date.parse(t))).toMatch(/future/);
+  });
+
   it("knows an expired link from a live one", () => {
     expect(isExpired({ expires_at: "2026-08-31T12:00:00Z" }, now)).toBe(true);
     expect(isExpired({ expires_at: "2026-09-02T12:00:00Z" }, now)).toBe(false);
@@ -62,5 +69,12 @@ describe("target_url", () => {
     expect(validateTargetUrl(undefined)).toMatch(/required/);
     expect(validateTargetUrl("")).toMatch(/required/);
     expect(validateTargetUrl(42)).toMatch(/required/);
+  });
+
+  it("rejects anything that is not an absolute http(s) URL (issue #5)", () => {
+    expect(validateTargetUrl("not a url")).toMatch(/http\(s\) URL/);
+    expect(validateTargetUrl("ftp://x")).toMatch(/http\(s\) URL/);
+    expect(validateTargetUrl("/relative/path")).toMatch(/http\(s\) URL/);
+    expect(validateTargetUrl("http://example.com")).toBeNull();
   });
 });

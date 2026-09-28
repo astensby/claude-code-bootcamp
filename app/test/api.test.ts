@@ -25,6 +25,16 @@ describe("POST /links", () => {
     expect((await res.json()).error).toMatch(/target_url/);
   });
 
+  it("returns 400 when target_url is not an http(s) URL (issue #5)", async () => {
+    for (const target_url of ["not a url", "ftp://x"]) {
+      const res = await postJson(app.base, "/links", { target_url });
+      expect(res.status).toBe(400);
+      expect((await res.json()).error).toMatch(/http\(s\) URL/);
+    }
+    const ok = await postJson(app.base, "/links", { target_url: "http://example.com/plain-http" });
+    expect(ok.status).toBe(201);
+  });
+
   it("returns 400 on a body that is not JSON", async () => {
     const res = await postJson(app.base, "/links", "not json");
     expect(res.status).toBe(400);
