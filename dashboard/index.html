@@ -1,0 +1,391 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>linkr · click dashboard</title>
+<style>
+  /* Palette: one accent for data, ink for text, greys for everything that is not data. */
+  :root {
+    color-scheme: light;
+    --surface: #fcfcfb;
+    --card: #ffffff;
+    --border: #e6e5e1;
+    --grid: #ecebe7;
+    --ink: #0b0b0b;
+    --ink-2: #52514e;
+    --ink-3: #8a8985;
+    --accent: #2a78d6;
+    --accent-soft: rgba(42, 120, 214, 0.10);
+    --muted-bar: #c9c8c2;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      color-scheme: dark;
+      --surface: #1a1a19;
+      --card: #222221;
+      --border: #33332f;
+      --grid: #2e2e2b;
+      --ink: #ffffff;
+      --ink-2: #c3c2b7;
+      --ink-3: #8a8985;
+      --accent: #3987e5;
+      --accent-soft: rgba(57, 135, 229, 0.14);
+      --muted-bar: #4a4a46;
+    }
+  }
+  :root[data-theme="dark"] {
+    color-scheme: dark;
+    --surface: #1a1a19; --card: #222221; --border: #33332f; --grid: #2e2e2b;
+    --ink: #ffffff; --ink-2: #c3c2b7; --ink-3: #8a8985;
+    --accent: #3987e5; --accent-soft: rgba(57, 135, 229, 0.14); --muted-bar: #4a4a46;
+  }
+
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; padding: 2rem 1.5rem 3rem;
+    background: var(--surface); color: var(--ink);
+    font: 15px/1.45 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  }
+  main { max-width: 1280px; margin: 0 auto; }
+  header { display: flex; flex-wrap: wrap; align-items: baseline; gap: .5rem 1.5rem; margin-bottom: 1.25rem; }
+  h1 { font-size: 1.5rem; margin: 0; font-weight: 650; letter-spacing: -0.01em; }
+  header p { margin: 0; color: var(--ink-2); }
+
+  .tiles { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(180px, 100%), 1fr)); gap: 12px; margin-bottom: 12px; }
+  .tile { min-width: 0; overflow-wrap: anywhere; background: var(--card); border: 1px solid var(--border); border-radius: 10px; padding: 14px 16px; }
+  .tile .label { color: var(--ink-2); font-size: .85rem; }
+  .tile .value { font-size: clamp(1.2rem, 4.5vw, 1.75rem); font-weight: 600; letter-spacing: -0.02em; margin-top: 2px; font-variant-numeric: tabular-nums; }
+  .tile .sub { color: var(--ink-3); font-size: .8rem; margin-top: 2px; }
+
+  .grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+  .card { background: var(--card); border: 1px solid var(--border); border-radius: 10px; padding: 16px 18px 12px; position: relative; min-width: 0; }
+  .card.wide { grid-column: 1 / -1; }
+  .card h2 { font-size: 1rem; font-weight: 600; margin: 0 0 2px; }
+  .card .sub { color: var(--ink-2); font-size: .85rem; margin: 0 0 10px; }
+  .card h3 { font-size: .8rem; font-weight: 500; color: var(--ink-3); margin: 10px 0 4px; text-transform: uppercase; letter-spacing: .04em; }
+  .card svg { display: block; width: 100%; height: auto; overflow: visible; }
+  @media (max-width: 800px) { .grid { grid-template-columns: minmax(0, 1fr); } }
+
+  /* marks */
+  .bar { fill: var(--accent); }
+  .bar.other { fill: var(--muted-bar); }
+  .bar-row:hover .bar { opacity: .8; }
+  .grid-line { stroke: var(--grid); stroke-width: 1; }
+  .axis-text { fill: var(--ink-2); font-size: 12px; }
+  .value-text { fill: var(--ink); font-size: 12px; font-variant-numeric: tabular-nums; }
+  .label-text { fill: var(--ink); font-size: 12.5px; }
+  .label-sub { fill: var(--ink-3); font-size: 11px; }
+  .line { fill: none; stroke: var(--accent); stroke-width: 2; stroke-linejoin: round; stroke-linecap: round; }
+  .area { fill: var(--accent-soft); }
+  .peak-dot { fill: var(--accent); stroke: var(--card); stroke-width: 2; }
+  .crosshair { stroke: var(--ink-3); stroke-width: 1; pointer-events: none; }
+  .hover-dot { fill: var(--accent); stroke: var(--card); stroke-width: 2; pointer-events: none; }
+  .hit { fill: transparent; }
+
+  .tooltip {
+    position: absolute; pointer-events: none; display: none;
+    background: var(--ink); color: var(--surface); font-size: 12px; line-height: 1.35;
+    padding: 6px 9px; border-radius: 6px; white-space: nowrap; transform: translate(-50%, -100%);
+  }
+
+  details { margin-top: 8px; }
+  summary { cursor: pointer; color: var(--ink-2); font-size: .85rem; }
+  table { border-collapse: collapse; width: 100%; font-size: .85rem; margin-top: 6px; }
+  th, td { text-align: left; padding: 4px 6px; border-bottom: 1px solid var(--border); }
+  td.num, th.num { text-align: right; font-variant-numeric: tabular-nums; }
+  td.url { max-width: min(26rem, 45vw); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--ink-2); }
+  details > div { overflow-x: auto; }
+
+  .assumptions { margin-top: 20px; color: var(--ink-2); font-size: .9rem; }
+  .assumptions h2 { font-size: 1rem; color: var(--ink); margin: 0 0 6px; }
+  .assumptions ol { margin: 0; padding-left: 1.25rem; }
+  .assumptions li { margin: 3px 0; }
+  code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: .9em; }
+</style>
+</head>
+<body>
+<main>
+  <header>
+    <h1>linkr · click dashboard</h1>
+    <p id="subtitle"></p>
+  </header>
+
+  <div class="tiles" id="tiles"></div>
+
+  <div class="grid">
+    <section class="card wide">
+      <h2>Clicks per day</h2>
+      <p class="sub">How traffic moves over the twelve weeks. Hover for a day.</p>
+      <div id="by-day"></div>
+    </section>
+
+    <section class="card">
+      <h2>Top 10 links</h2>
+      <p class="sub">Which links get the most clicks.</p>
+      <div id="top-links"></div>
+      <details><summary>Show as table</summary><div id="top-links-table"></div></details>
+    </section>
+
+    <section class="card">
+      <h2>Referrers</h2>
+      <p class="sub">Where visitors come from. Top 8, rest folded into other.</p>
+      <div id="by-referrer"></div>
+      <details><summary>Show as table</summary><div id="by-referrer-table"></div></details>
+    </section>
+
+    <section class="card">
+      <h2>Clicks per weekday</h2>
+      <p class="sub">Same twelve weeks, by day of the week.</p>
+      <div id="by-weekday"></div>
+    </section>
+
+    <section class="card">
+      <h2>Devices and countries</h2>
+      <p class="sub">Share of clicks. Countries: top 8, rest folded into other.</p>
+      <h3>Devices</h3>
+      <div id="by-device"></div>
+      <h3>Countries</h3>
+      <div id="by-country"></div>
+    </section>
+  </div>
+
+  <section class="assumptions" id="assumptions">
+    <h2>Assumptions</h2>
+    <ol>
+      <li>All timestamps are UTC. Days and weekdays are cut at UTC midnight, not local time.</li>
+      <li>About 2% of <code>ts</code> values (<span id="legacy-count"></span> rows) use <code>DD/MM/YYYY HH:mm</code> instead of ISO 8601. They were parsed as day-first UTC and kept, not dropped.</li>
+      <li><code>newsletter</code> and <code>direct</code> are not hostnames: they mean tracked mail and unknown source. They are shown as referrers anyway.</li>
+      <li>A click is a row in <code>clicks.csv</code>. No bot filtering, no de-duplication.</li>
+      <li>"Top links" counts every click in the window regardless of when the link was created, so an old link can outrank a new one that is doing better per day.</li>
+      <li>The window is twelve full weeks, Monday to Sunday, so every weekday appears exactly twelve times in the weekday chart.</li>
+      <li>Numbers are pre-computed by <code>dashboard/build.mjs</code> from <code>data/</code>; rebuild after <code>npm run gen-data</code>.</li>
+    </ol>
+  </section>
+</main>
+
+<script>
+/*
+ * House pattern (add a chart the same way):
+ *   1. palette lives in CSS custom properties (--accent, --ink-2, --grid …) — never hex in JS
+ *   2. one <section class="card"> per chart, with an <h2> and a <p class="sub">
+ *   3. one draw<Name>(el, data) function per chart, building inline SVG with el()/svg()
+ *   4. all numbers come from the DATA object below (built by build.mjs, no fetch)
+ *   5. render() calls every draw function in order — register new charts there
+ *   6. text uses the ink tokens; only marks use --accent
+ */
+const DATA = {"generated":"2026-09-28","window":{"from":"2026-06-29","to":"2026-09-20","days":84},"totals":{"clicks":50000,"links":300,"links_with_clicks":300,"top10_share":0.32518,"campaigns":20,"avg_per_day":595,"busiest_day":"2026-08-25","busiest_clicks":2400,"top_referrer":"linkedin.com","top_referrer_share":0.32004,"legacy_ts_rows":1014},"top_links":[{"slug":"damrv6","target_url":"https://blog.example.com/partners","clicks":4451},{"slug":"4d9u7p","target_url":"https://status.example.com/docs/getting-started","clicks":2610},{"slug":"y96ptj","target_url":"https://learn.example.com/changelog","clicks":1755},{"slug":"e9fyyh","target_url":"https://blog.example.com/compare","clicks":1360},{"slug":"f56trc","target_url":"https://events.example.com/compare","clicks":1209},{"slug":"3ne5ma","target_url":"https://learn.example.com/careers/backend","clicks":1160},{"slug":"fbyyji","target_url":"https://help.example.com/roadmap?utm_campaign=cmp-20","clicks":948},{"slug":"e9pamc","target_url":"https://status.example.com/changelog","clicks":933},{"slug":"3vvnzk","target_url":"https://events.example.com/webinar/agents-in-production?utm_campaign=cmp-09","clicks":930},{"slug":"j9d4gr","target_url":"https://app.example.com/release/2026-08","clicks":903}],"by_day":[{"day":"2026-06-29","clicks":527},{"day":"2026-06-30","clicks":636},{"day":"2026-07-01","clicks":696},{"day":"2026-07-02","clicks":569},{"day":"2026-07-03","clicks":446},{"day":"2026-07-04","clicks":232},{"day":"2026-07-05","clicks":249},{"day":"2026-07-06","clicks":572},{"day":"2026-07-07","clicks":603},{"day":"2026-07-08","clicks":655},{"day":"2026-07-09","clicks":607},{"day":"2026-07-10","clicks":463},{"day":"2026-07-11","clicks":241},{"day":"2026-07-12","clicks":263},{"day":"2026-07-13","clicks":562},{"day":"2026-07-14","clicks":640},{"day":"2026-07-15","clicks":637},{"day":"2026-07-16","clicks":620},{"day":"2026-07-17","clicks":491},{"day":"2026-07-18","clicks":246},{"day":"2026-07-19","clicks":272},{"day":"2026-07-20","clicks":556},{"day":"2026-07-21","clicks":657},{"day":"2026-07-22","clicks":694},{"day":"2026-07-23","clicks":584},{"day":"2026-07-24","clicks":429},{"day":"2026-07-25","clicks":243},{"day":"2026-07-26","clicks":266},{"day":"2026-07-27","clicks":576},{"day":"2026-07-28","clicks":671},{"day":"2026-07-29","clicks":685},{"day":"2026-07-30","clicks":577},{"day":"2026-07-31","clicks":448},{"day":"2026-08-01","clicks":227},{"day":"2026-08-02","clicks":276},{"day":"2026-08-03","clicks":579},{"day":"2026-08-04","clicks":645},{"day":"2026-08-05","clicks":666},{"day":"2026-08-06","clicks":603},{"day":"2026-08-07","clicks":459},{"day":"2026-08-08","clicks":220},{"day":"2026-08-09","clicks":283},{"day":"2026-08-10","clicks":592},{"day":"2026-08-11","clicks":646},{"day":"2026-08-12","clicks":659},{"day":"2026-08-13","clicks":636},{"day":"2026-08-14","clicks":461},{"day":"2026-08-15","clicks":258},{"day":"2026-08-16","clicks":262},{"day":"2026-08-17","clicks":542},{"day":"2026-08-18","clicks":654},{"day":"2026-08-19","clicks":668},{"day":"2026-08-20","clicks":566},{"day":"2026-08-21","clicks":478},{"day":"2026-08-22","clicks":222},{"day":"2026-08-23","clicks":241},{"day":"2026-08-24","clicks":2070},{"day":"2026-08-25","clicks":2400},{"day":"2026-08-26","clicks":2362},{"day":"2026-08-27","clicks":2149},{"day":"2026-08-28","clicks":1695},{"day":"2026-08-29","clicks":842},{"day":"2026-08-30","clicks":876},{"day":"2026-08-31","clicks":606},{"day":"2026-09-01","clicks":650},{"day":"2026-09-02","clicks":673},{"day":"2026-09-03","clicks":553},{"day":"2026-09-04","clicks":434},{"day":"2026-09-05","clicks":234},{"day":"2026-09-06","clicks":268},{"day":"2026-09-07","clicks":537},{"day":"2026-09-08","clicks":640},{"day":"2026-09-09","clicks":717},{"day":"2026-09-10","clicks":588},{"day":"2026-09-11","clicks":433},{"day":"2026-09-12","clicks":262},{"day":"2026-09-13","clicks":252},{"day":"2026-09-14","clicks":550},{"day":"2026-09-15","clicks":650},{"day":"2026-09-16","clicks":643},{"day":"2026-09-17","clicks":580},{"day":"2026-09-18","clicks":412},{"day":"2026-09-19","clicks":208},{"day":"2026-09-20","clicks":260}],"by_weekday":[{"name":"Mon","clicks":8269},{"name":"Tue","clicks":9492},{"name":"Wed","clicks":9755},{"name":"Thu","clicks":8632},{"name":"Fri","clicks":6649},{"name":"Sat","clicks":3435},{"name":"Sun","clicks":3768}],"by_referrer":[{"name":"linkedin.com","clicks":16002},{"name":"newsletter","clicks":13436},{"name":"google.com","clicks":6964},{"name":"direct","clicks":4585},{"name":"t.co","clicks":1787},{"name":"slack.com","clicks":1295},{"name":"facebook.com","clicks":1026},{"name":"news.ycombinator.com","clicks":868},{"name":"other","clicks":4037,"other":true}],"by_device":[{"name":"mobile","clicks":26011},{"name":"desktop","clicks":20909},{"name":"tablet","clicks":3080}],"by_country":[{"name":"NO","clicks":29042},{"name":"SE","clicks":4570},{"name":"DK","clicks":3520},{"name":"DE","clicks":2508},{"name":"GB","clicks":2494},{"name":"US","clicks":2428},{"name":"NL","clicks":1509},{"name":"FI","clicks":1439},{"name":"other","clicks":2490,"other":true}]};
+
+const fmt = (n) => n.toLocaleString("en-US");
+const pct = (x) => (x * 100).toFixed(0) + "%";
+const SVG_NS = "http://www.w3.org/2000/svg";
+
+function svg(tag, attrs = {}, children = []) {
+  const node = document.createElementNS(SVG_NS, tag);
+  for (const [k, v] of Object.entries(attrs)) node.setAttribute(k, v);
+  for (const c of children) node.append(typeof c === "string" ? document.createTextNode(c) : c);
+  return node;
+}
+function el(tag, attrs = {}, children = []) {
+  const node = document.createElement(tag);
+  for (const [k, v] of Object.entries(attrs)) {
+    if (k === "text") node.textContent = v;
+    else node.setAttribute(k, v);
+  }
+  for (const c of children) node.append(c);
+  return node;
+}
+function niceMax(max) {
+  const p = 10 ** Math.floor(Math.log10(max));
+  const f = max / p;
+  const step = f <= 1 ? 0.2 : f <= 2 ? 0.5 : f <= 5 ? 1 : 2;
+  return Math.ceil(f / step) * step * p;
+}
+function ticks(max, n = 4) {
+  const top = niceMax(max);
+  return Array.from({ length: n + 1 }, (_, i) => Math.round((top / n) * i));
+}
+function truncate(s, n) { return s.length > n ? s.slice(0, n - 1) + "…" : s; }
+
+/* ---- tiles ---------------------------------------------------------- */
+function drawTiles(root, t) {
+  const tile = (label, value, sub) => el("div", { class: "tile" }, [
+    el("div", { class: "label", text: label }),
+    el("div", { class: "value", text: value }),
+    el("div", { class: "sub", text: sub }),
+  ]);
+  root.append(
+    tile("Total clicks", fmt(t.clicks), DATA.window.days + " days, " + fmt(t.avg_per_day) + " per day"),
+    tile("Links", fmt(t.links), "top 10 take " + pct(t.top10_share) + " of all clicks"),
+    tile("Busiest day", fmt(t.busiest_clicks), t.busiest_day),
+    tile("Top referrer", t.top_referrer, pct(t.top_referrer_share) + " of all clicks"),
+  );
+}
+
+/* ---- horizontal bars ------------------------------------------------ */
+function drawBars(root, rows, { label, sub, W = 600, rowH = 30, labelW = 150 } = {}) {
+  const max = Math.max(...rows.map((r) => r.clicks));
+  const H = rows.length * rowH + 4;
+  const x0 = labelW + 8;
+  const plotW = W - x0 - 60;
+  const root_ = svg("svg", { viewBox: "0 0 " + W + " " + H, role: "img" });
+  rows.forEach((r, i) => {
+    const y = i * rowH + 2;
+    const w = Math.max(2, (r.clicks / max) * plotW);
+    const g = svg("g", { class: "bar-row" });
+    const name = label(r);
+    g.append(svg("text", { x: labelW, y: y + 14, "text-anchor": "end", class: "label-text" }, [truncate(name, 20)]));
+    if (sub) g.append(svg("text", { x: labelW, y: y + 26, "text-anchor": "end", class: "label-sub" }, [truncate(sub(r), 32)]));
+    // 4px rounded data-end, square at the baseline: a path, not a rect
+    const bh = 20;
+    const rr = Math.min(4, w / 2);
+    const d = "M" + x0 + " " + (y + 3) + " h" + (w - rr) + " a" + rr + " " + rr + " 0 0 1 " + rr + " " + rr + " v" + (bh - 2 * rr) + " a" + rr + " " + rr + " 0 0 1 -" + rr + " " + rr + " h-" + (w - rr) + " z";
+    g.append(svg("path", { d, class: "bar" + (r.other ? " other" : "") }));
+    g.append(svg("text", { x: x0 + w + 6, y: y + 17, class: "value-text" }, [fmt(r.clicks)]));
+    g.append(svg("title", {}, [name + ": " + fmt(r.clicks) + " clicks"]));
+    root_.append(g);
+  });
+  root.append(root_);
+}
+
+function drawTopLinks(root, rows) {
+  drawBars(root, rows, { label: (r) => r.slug, sub: (r) => r.target_url.replace(/^https?:\/\//, ""), rowH: 34, labelW: 190 });
+}
+function drawReferrers(root, rows) {
+  drawBars(root, rows, { label: (r) => r.name, labelW: 160 });
+}
+function drawDevices(root, rows) {
+  const total = rows.reduce((s, r) => s + r.clicks, 0);
+  drawBars(root, rows.map((r) => ({ ...r, name: r.name + " · " + pct(r.clicks / total) })), { label: (r) => r.name, rowH: 26, labelW: 150 });
+}
+function drawCountries(root, rows) {
+  drawBars(root, rows, { label: (r) => r.name, rowH: 24, labelW: 150 });
+}
+
+/* ---- columns (weekday) ---------------------------------------------- */
+function drawWeekday(root, rows) {
+  const W = 600, H = 220, padL = 50, padB = 28, padT = 16;
+  const plotW = W - padL - 10, plotH = H - padB - padT;
+  const tk = ticks(Math.max(...rows.map((r) => r.clicks)));
+  const top = tk[tk.length - 1];
+  const s = svg("svg", { viewBox: "0 0 " + W + " " + H, role: "img" });
+  for (const t of tk) {
+    const y = padT + plotH - (t / top) * plotH;
+    s.append(svg("line", { x1: padL, x2: W - 10, y1: y, y2: y, class: "grid-line" }));
+    s.append(svg("text", { x: padL - 8, y: y + 4, "text-anchor": "end", class: "axis-text" }, [fmt(t)]));
+  }
+  const slot = plotW / rows.length;
+  const bw = Math.min(24, slot * 0.6);
+  rows.forEach((r, i) => {
+    const h = (r.clicks / top) * plotH;
+    const x = padL + slot * i + (slot - bw) / 2;
+    const y = padT + plotH - h;
+    const rr = Math.min(4, bw / 2);
+    const d = "M" + x + " " + (y + rr) + " a" + rr + " " + rr + " 0 0 1 " + rr + " -" + rr + " h" + (bw - 2 * rr) + " a" + rr + " " + rr + " 0 0 1 " + rr + " " + rr + " v" + (h - rr) + " h-" + bw + " z";
+    const g = svg("g", { class: "bar-row" }, [
+      svg("path", { d, class: "bar" }),
+      svg("text", { x: x + bw / 2, y: y - 6, "text-anchor": "middle", class: "value-text" }, [fmt(r.clicks)]),
+      svg("text", { x: x + bw / 2, y: H - 8, "text-anchor": "middle", class: "axis-text" }, [r.name]),
+      svg("title", {}, [r.name + ": " + fmt(r.clicks) + " clicks"]),
+    ]);
+    s.append(g);
+  });
+  root.append(s);
+}
+
+/* ---- line + area (per day) ------------------------------------------ */
+function drawByDay(root, rows) {
+  const W = 1240, H = 300, padL = 56, padR = 20, padT = 20, padB = 34;
+  const plotW = W - padL - padR, plotH = H - padT - padB;
+  const tk = ticks(Math.max(...rows.map((r) => r.clicks)));
+  const top = tk[tk.length - 1];
+  const xOf = (i) => padL + (i / (rows.length - 1)) * plotW;
+  const yOf = (v) => padT + plotH - (v / top) * plotH;
+  const s = svg("svg", { viewBox: "0 0 " + W + " " + H, role: "img" });
+
+  for (const t of tk) {
+    s.append(svg("line", { x1: padL, x2: W - padR, y1: yOf(t), y2: yOf(t), class: "grid-line" }));
+    s.append(svg("text", { x: padL - 8, y: yOf(t) + 4, "text-anchor": "end", class: "axis-text" }, [fmt(t)]));
+  }
+  // one x label per Monday
+  rows.forEach((r, i) => {
+    const d = new Date(r.day + "T00:00:00Z");
+    if (d.getUTCDay() !== 1) return;
+    const label = d.getUTCDate() + " " + d.toLocaleString("en-US", { month: "short", timeZone: "UTC" });
+    s.append(svg("text", { x: xOf(i), y: H - 10, "text-anchor": "middle", class: "axis-text" }, [label]));
+  });
+
+  const pts = rows.map((r, i) => xOf(i).toFixed(1) + " " + yOf(r.clicks).toFixed(1));
+  s.append(svg("path", { d: "M" + pts.join(" L") + " L" + xOf(rows.length - 1) + " " + yOf(0) + " L" + xOf(0) + " " + yOf(0) + " Z", class: "area" }));
+  s.append(svg("path", { d: "M" + pts.join(" L"), class: "line" }));
+
+  // label the extreme only
+  const peakI = rows.reduce((best, r, i) => (r.clicks > rows[best].clicks ? i : best), 0);
+  const peak = rows[peakI];
+  s.append(svg("circle", { cx: xOf(peakI), cy: yOf(peak.clicks), r: 4.5, class: "peak-dot" }));
+  const anchor = peakI > rows.length * 0.8 ? "end" : "start";
+  const dx = anchor === "end" ? -10 : 10;
+  s.append(svg("text", { x: xOf(peakI) + dx, y: yOf(peak.clicks) - 8, "text-anchor": anchor, class: "value-text" }, ["peak " + fmt(peak.clicks) + " · " + peak.day]));
+
+  // hover: crosshair + dot + tooltip
+  const cross = svg("line", { x1: 0, x2: 0, y1: padT, y2: padT + plotH, class: "crosshair", visibility: "hidden" });
+  const dot = svg("circle", { r: 4.5, class: "hover-dot", visibility: "hidden" });
+  const hit = svg("rect", { x: padL, y: padT, width: plotW, height: plotH, class: "hit" });
+  s.append(cross, dot, hit);
+  const tip = el("div", { class: "tooltip" });
+  root.style.position = "relative";
+  root.append(s, tip);
+
+  hit.addEventListener("mousemove", (e) => {
+    const rect = s.getBoundingClientRect();
+    const x = ((e.clientX - rect.left) / rect.width) * W;
+    const i = Math.max(0, Math.min(rows.length - 1, Math.round(((x - padL) / plotW) * (rows.length - 1))));
+    const r = rows[i];
+    cross.setAttribute("x1", xOf(i)); cross.setAttribute("x2", xOf(i)); cross.setAttribute("visibility", "visible");
+    dot.setAttribute("cx", xOf(i)); dot.setAttribute("cy", yOf(r.clicks)); dot.setAttribute("visibility", "visible");
+    const wd = new Date(r.day + "T00:00:00Z").toLocaleString("en-US", { weekday: "short", timeZone: "UTC" });
+    tip.textContent = wd + " " + r.day + " · " + fmt(r.clicks) + " clicks";
+    tip.style.display = "block";
+    tip.style.left = (xOf(i) / W) * rect.width + "px";
+    tip.style.top = (yOf(r.clicks) / H) * rect.height - 10 + "px";
+  });
+  hit.addEventListener("mouseleave", () => {
+    cross.setAttribute("visibility", "hidden"); dot.setAttribute("visibility", "hidden"); tip.style.display = "none";
+  });
+}
+
+/* ---- tables (the non-chart view) ------------------------------------ */
+function drawTable(root, rows, cols) {
+  const table = el("table");
+  table.append(el("thead", {}, [el("tr", {}, cols.map((c) => el("th", { class: c.num ? "num" : "", text: c.label })))]));
+  table.append(el("tbody", {}, rows.map((r) => el("tr", {}, cols.map((c) => el("td", { class: (c.num ? "num " : "") + (c.cls ?? ""), text: c.get(r) }))))));
+  root.append(table);
+}
+
+/* ---- render --------------------------------------------------------- */
+function render() {
+  document.getElementById("subtitle").textContent =
+    DATA.window.from + " to " + DATA.window.to + " · built " + DATA.generated;
+  document.getElementById("legacy-count").textContent = fmt(DATA.totals.legacy_ts_rows);
+  drawTiles(document.getElementById("tiles"), DATA.totals);
+  drawByDay(document.getElementById("by-day"), DATA.by_day);
+  drawTopLinks(document.getElementById("top-links"), DATA.top_links);
+  drawReferrers(document.getElementById("by-referrer"), DATA.by_referrer);
+  drawWeekday(document.getElementById("by-weekday"), DATA.by_weekday);
+  drawDevices(document.getElementById("by-device"), DATA.by_device);
+  drawCountries(document.getElementById("by-country"), DATA.by_country);
+  drawTable(document.getElementById("top-links-table"), DATA.top_links, [
+    { label: "Slug", get: (r) => r.slug },
+    { label: "Target", get: (r) => r.target_url, cls: "url" },
+    { label: "Clicks", get: (r) => fmt(r.clicks), num: true },
+  ]);
+  drawTable(document.getElementById("by-referrer-table"), DATA.by_referrer, [
+    { label: "Referrer", get: (r) => r.name },
+    { label: "Clicks", get: (r) => fmt(r.clicks), num: true },
+    { label: "Share", get: (r) => pct(r.clicks / DATA.totals.clicks), num: true },
+  ]);
+}
+render();
+</script>
+</body>
+</html>
