@@ -16,7 +16,7 @@ describe("Store", () => {
     const store = new Store(tempStoreFile());
     store.add(link("abc123"));
     store.add(link("def456"));
-    expect(store.get("abc123")!.target_url).toBe("https://example.com/abc123");
+    expect(store.get("abc123")?.target_url).toBe("https://example.com/abc123");
     expect(store.list().map((l) => l.slug)).toEqual(["abc123", "def456"]);
   });
 

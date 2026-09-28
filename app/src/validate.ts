@@ -1,5 +1,3 @@
-import type { Link } from "./store.js";
-
 /** Slugs: 3–32 characters, letters, digits, dash, underscore. */
 export const SLUG_RE = /^[A-Za-z0-9_-]{3,32}$/;
 
@@ -58,7 +56,7 @@ export function isExpired(link: { expires_at?: string | null }, now: number = Da
 export function generateSlug(random: () => number = Math.random, length = 6): string {
   let out = "";
   for (let i = 0; i < length; i++) {
-    out += ALPHABET[Math.floor(random() * ALPHABET.length)]!;
+    out += ALPHABET.charAt(Math.floor(random() * ALPHABET.length));
   }
   return out;
 }

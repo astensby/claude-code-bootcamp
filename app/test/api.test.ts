@@ -13,7 +13,7 @@ describe("POST /links", () => {
   it("creates a link and returns 201 with a generated slug", async () => {
     const res = await postJson(app.base, "/links", { target_url: "https://example.com/launch" });
     expect(res.status).toBe(201);
-    const body: any = await res.json();
+    const body: { slug: string; target_url: string; created_at: string } = await res.json();
     expect(body.slug).toMatch(/^[a-z0-9]{6}$/);
     expect(body.target_url).toBe("https://example.com/launch");
     expect(Date.parse(body.created_at)).not.toBeNaN();
@@ -155,8 +155,8 @@ describe("GET /api/links", () => {
     app.store.add(link("newer1", "2026-09-02T10:00:00.000Z"));
     app.store.add(link("same_a", "2026-09-01T12:00:00.000Z"));
     app.store.add(link("same_b", "2026-09-01T12:00:00.000Z"));
-    const links: any = await (await fetch(`${app.base}/api/links`)).json();
-    expect(links.map((l: any) => l.slug)).toEqual(["newer1", "same_a", "same_b", "older1"]);
+    const links: { slug: string }[] = await (await fetch(`${app.base}/api/links`)).json();
+    expect(links.map((l) => l.slug)).toEqual(["newer1", "same_a", "same_b", "older1"]);
   });
 });
 

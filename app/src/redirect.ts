@@ -1,8 +1,8 @@
 import type { IncomingMessage, ServerResponse } from "node:http";
 import type { Store } from "./store.js";
-import { isExpired, isValidSlug, normalizeSlug, SLUG_RE } from "./validate.js";
+import { isExpired, isValidSlug, normalizeSlug } from "./validate.js";
 
-function deviceOf(userAgent: any): string {
+function deviceOf(userAgent: string): string {
   const ua = userAgent.toLowerCase();
   if (ua.includes("ipad") || ua.includes("tablet")) return "tablet";
   if (ua.includes("mobile") || ua.includes("android") || ua.includes("iphone")) return "mobile";
@@ -26,7 +26,7 @@ export function redirect(req: IncomingMessage, res: ServerResponse, store: Store
   if (!link) return notFound(res);
   if (isExpired(link)) return gone(res);
 
-  const referer: any = req.headers.referer;
+  const referer = req.headers.referer;
   if (req.method !== "HEAD") {
     store.recordClick({
       ts: new Date().toISOString(),
@@ -37,7 +37,7 @@ export function redirect(req: IncomingMessage, res: ServerResponse, store: Store
     });
   }
 
-  res.writeHead(302, { location: store.get(normalizeSlug(slug))!.target_url });
+  res.writeHead(302, { location: link.target_url });
   res.end();
 }
 

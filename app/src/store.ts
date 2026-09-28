@@ -1,5 +1,5 @@
-import { existsSync, mkdirSync, readFileSync, renameSync, statSync, writeFileSync } from "node:fs";
-import { dirname, join } from "node:path";
+import { existsSync, mkdirSync, readFileSync, renameSync, writeFileSync } from "node:fs";
+import { dirname } from "node:path";
 
 export interface Link {
   slug: string;
@@ -58,7 +58,7 @@ export class Store {
 
   constructor(private readonly file: string) {
     if (existsSync(file)) {
-      const raw: any = loadStoreFile(file);
+      const raw = loadStoreFile(file) as Partial<StoreData>;
       this.data = { links: raw.links ?? [], clicks: raw.clicks ?? [] };
       for (const link of this.data.links) this.bySlug.set(link.slug, link);
     }
@@ -85,7 +85,7 @@ export class Store {
     this.data.links.push(link);
     this.bySlug.set(link.slug, link);
     this.flush();
-    return this.bySlug.get(link.slug)!;
+    return link;
   }
 
   recordClick(click: Click): void {
@@ -107,7 +107,6 @@ export class Store {
 
   /** Write to a sibling `.tmp` file and rename it over the store, so a crash mid-write never leaves a half file. */
   private flush(): void {
-    const size = JSON.stringify(this.data).length;
     mkdirSync(dirname(this.file), { recursive: true });
     const tmp = `${this.file}.tmp`;
     writeFileSync(tmp, JSON.stringify(this.data));

@@ -8,7 +8,7 @@
 - Redirect responses are read by a person in a browser: HTML bodies on 404 and 410, never JSON.
 - `data/clicks.csv` is the source of truth for stats; `/api/stats` after `npm run seed` must match it.
 - Slugs are generated from a 32-character alphabet without 0/o/1/l; keep it that way, they get read aloud.
-- The lint warnings on main are known debt (issue #7). Do not fix them as a side effect of another change.
+- Lint is at zero (issue #7 done): `npx biome lint . --error-on-warnings` stays green, and no `biome-ignore` comments.
 
 ## Rules earned so far
 - Before trusting any per-day number, check how `ts` is parsed: exports mix ISO 8601 with `DD/MM/YYYY HH:mm`, and dropping the odd rows silently shifts the daily curve. (E1)
@@ -19,4 +19,6 @@
 ## Working agreement
 - Plans are files: options → `SPEC.md` → `PLAN.md` before code, on anything bigger than a one-line fix.
 - Say what you verified and how. A change without a named test is not done.
+- Verify after every merge, not only before a PR: `npm test` runs before a merge commit is made. (E5 demo)
+- `claude -p` ignores the allowlist in `.claude/settings.json` until this workspace has been trusted interactively once. Do that before any loop. (E5 demo)
 - Do not widen an issue: if the acceptance list is met, stop and report what else you noticed.

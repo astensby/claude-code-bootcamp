@@ -4,7 +4,7 @@
  *
  *   npm run seed                      # → .data/store.json (or LINKR_STORE)
  */
-import { existsSync, readFileSync } from "node:fs";
+import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { type Click, type Link, Store, storePath } from "../app/src/store.js";
@@ -13,7 +13,7 @@ const DATA = fileURLToPath(new URL("../data", import.meta.url));
 
 function readCsv(file: string): Record<string, string>[] {
   const [header, ...lines] = readFileSync(join(DATA, file), "utf8").trim().split("\n");
-  const cols: any[] = header.split(",");
+  const cols = header.split(",");
   return lines.map((line) => {
     const cells = line.split(",");
     return Object.fromEntries(cols.map((c, i) => [c, cells[i] ?? ""]));
@@ -24,7 +24,7 @@ function readCsv(file: string): Record<string, string>[] {
 function toIso(ts: string): string {
   const m = /^(\d{2})\/(\d{2})\/(\d{4}) (\d{2}):(\d{2})$/.exec(ts);
   if (m) {
-    const [, dd, mm, yyyy, hh, mi] = m!;
+    const [, dd, mm, yyyy, hh, mi] = m;
     return `${yyyy}-${mm}-${dd}T${hh}:${mi}:00Z`;
   }
   const t = Date.parse(ts);
@@ -48,7 +48,6 @@ const clicks: Click[] = readCsv("clicks.csv").map((r) => ({
   device: r.device,
 }));
 
-const started = Date.now();
 const file = storePath();
 Store.open(file).replaceAll(links, clicks);
 console.log(

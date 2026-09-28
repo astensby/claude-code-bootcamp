@@ -1,6 +1,6 @@
-import { existsSync, readFileSync } from "node:fs";
+import { readFileSync } from "node:fs";
 import { createServer, type IncomingMessage, type Server, type ServerResponse } from "node:http";
-import { dirname, join, resolve } from "node:path";
+import { dirname, join } from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
 import { createLink, listLinks, sendJson, stats } from "./api/links.js";
 import { limitFromEnv, RateLimiter } from "./ratelimit.js";
@@ -76,16 +76,17 @@ export function createApp(store: Store, options: AppOptions = {}): Server {
       }
 
       return sendJson(res, 404, { error: "not found" });
-    } catch (err: any) {
+    } catch (err) {
       console.error(err);
       return sendJson(res, 500, { error: "internal error" });
     }
   });
 }
 
-const isMain = import.meta.url === pathToFileURL(process.argv[1]!).href;
+const entry = process.argv[1];
+const isMain = entry !== undefined && import.meta.url === pathToFileURL(entry).href;
 if (isMain) {
-  const port = Number(process.env.PORT ?? 3000);
+  const port = Number(process.env.PORT ?? DEFAULT_PORT);
   const store = Store.open();
   createApp(store).listen(port, () => {
     console.log(`linkr listening on http://localhost:${port}  (${store.list().length} links)`);

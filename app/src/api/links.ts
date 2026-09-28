@@ -1,10 +1,9 @@
 import type { IncomingMessage, ServerResponse } from "node:http";
 import type { RateLimiter } from "../ratelimit.js";
-import type { Click, Link, Store } from "../store.js";
+import type { Link, Store } from "../store.js";
 import {
   generateSlug,
   isExpired,
-  isValidSlug,
   normalizeSlug,
   validateExpiresAt,
   validateSlug,
@@ -45,7 +44,7 @@ export async function readJsonBody(req: IncomingMessage): Promise<Record<string,
   if (size > MAX_BODY_BYTES) throw new PayloadTooLargeError();
   const text = Buffer.concat(chunks).toString("utf8");
   if (text.trim() === "") return {};
-  const parsed: any = JSON.parse(text);
+  const parsed: unknown = JSON.parse(text);
   if (typeof parsed !== "object" || parsed === null || Array.isArray(parsed)) {
     throw new SyntaxError("body must be a JSON object");
   }
@@ -59,7 +58,7 @@ export async function createLink(
   store: Store,
   limiter: RateLimiter,
 ) {
-  let body: any;
+  let body: Record<string, unknown>;
   try {
     body = await readJsonBody(req);
   } catch (err) {
@@ -78,7 +77,7 @@ export async function createLink(
     );
   }
 
-  const problem = validateTargetUrl((body as any).target_url) ?? validateSlug(body.slug);
+  const problem = validateTargetUrl(body.target_url) ?? validateSlug(body.slug);
   if (problem) return sendJson(res, 400, { error: problem });
 
   const expiresProblem = validateExpiresAt(body.expires_at);
@@ -134,7 +133,7 @@ function countRows(counts: Map<string, number>) {
 /** GET /api/stats?since=<iso> — aggregate clicks, optionally from a point in time. */
 export function stats(_req: IncomingMessage, res: ServerResponse, store: Store, url: URL) {
   const now = Date.now();
-  const sinceParam: any = url.searchParams.get("since");
+  const sinceParam = url.searchParams.get("since");
   let since: number | null = null;
   if (sinceParam !== null) {
     since = ISO_SINCE_RE.test(sinceParam) ? Date.parse(sinceParam) : Number.NaN;
@@ -169,8 +168,13 @@ export function stats(_req: IncomingMessage, res: ServerResponse, store: Store, 
     .sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]))
     .slice(0, 10)
     .map(([slug, clicks]) => {
-      const link = store.get(slug)!;
-      return { slug, target_url: link.target_url, clicks, expired: isExpired(link) };
+      const link = store.get(slug);
+      return {
+        slug,
+        target_url: link?.target_url ?? "",
+        clicks,
+        expired: link ? isExpired(link, now) : false,
+      };
     });
 
   const by_day = [...perDay.entries()]
@@ -178,7 +182,7 @@ export function stats(_req: IncomingMessage, res: ServerResponse, store: Store, 
     .map(([day, clicks]) => ({ day, clicks }));
 
   const by_referrer = [...perReferrer.entries()]
-    .sort((a: any, b: any) => b[1] - a[1] || a[0].localeCompare(b[0]))
+    .sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]))
     .map(([referrer, clicks]) => ({ referrer, clicks }));
 
   const out: Stats = {

@@ -33,7 +33,7 @@ export async function startApp(
   const store = new Store(join(dir, "store.json"));
   const server = createApp(store, options);
   await new Promise<void>((resolve) => server.listen(0, resolve));
-  const { port } = server.address() as any;
+  const { port } = server.address() as AddressInfo;
   return {
     base: `http://127.0.0.1:${port}`,
     store,
