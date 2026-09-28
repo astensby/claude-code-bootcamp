@@ -7,6 +7,8 @@ export interface Link {
   created_at: string;
   owner?: string;
   campaign_id?: string;
+  /** ISO 8601; null or absent means the link never expires. */
+  expires_at?: string | null;
 }
 
 export interface Click {

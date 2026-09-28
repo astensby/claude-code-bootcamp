@@ -11,6 +11,8 @@
     table { border-collapse: collapse; width: 100%; }
     th, td { text-align: left; padding: .4rem .6rem; border-bottom: 1px solid #8884; }
     td.url { max-width: 30rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    tr.expired { opacity: .5; }
+    tr.expired td.expires::after { content: " (expired)"; }
     nav a { margin-right: 1rem; }
   </style>
 </head>
@@ -19,7 +21,7 @@
   <h1>All links</h1>
   <p id="count"></p>
   <table>
-    <thead><tr><th>Slug</th><th>Target</th><th>Created</th></tr></thead>
+    <thead><tr><th>Slug</th><th>Target</th><th>Created</th><th>Expires</th></tr></thead>
     <tbody id="rows"></tbody>
   </table>
   <script>
@@ -40,7 +42,11 @@
         url.textContent = l.target_url;
         const created = document.createElement("td");
         created.textContent = l.created_at.slice(0, 16).replace("T", " ");
-        tr.append(slug, url, created);
+        const expires = document.createElement("td");
+        expires.className = "expires";
+        expires.textContent = l.expires_at ? l.expires_at.slice(0, 16).replace("T", " ") : "—";
+        if (l.expires_at && Date.parse(l.expires_at) <= Date.now()) tr.classList.add("expired");
+        tr.append(slug, url, created, expires);
         tbody.append(tr);
       }
     })();

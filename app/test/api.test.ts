@@ -108,10 +108,11 @@ describe("GET /api/stats", () => {
     seed();
     const s = await (await fetch(`${app.base}/api/stats`)).json();
     expect(s.total_clicks).toBe(4);
-    expect(s.top_links[0]).toEqual({
+    expect(s.top_links[0]).toMatchObject({
       slug: "aaa111",
       target_url: "https://example.com/a",
       clicks: 3,
+      expired: false,
     });
     expect(s.by_day).toEqual([
       { day: "2026-09-01", clicks: 2 },
@@ -140,6 +141,52 @@ describe("GET /api/stats", () => {
       expect(res.status, `since=${bad}`).toBe(400);
       expect((await res.json()).error).toMatch(/ISO 8601/);
     }
+  });
+});
+
+describe("expiry", () => {
+  const future = new Date(Date.now() + 60 * 60 * 1000).toISOString();
+
+  it("creates a link with expires_at and returns it normalised", async () => {
+    const res = await postJson(app.base, "/links", {
+      target_url: "https://example.com/e",
+      expires_at: future,
+    });
+    expect(res.status).toBe(201);
+    expect((await res.json()).expires_at).toBe(future);
+  });
+
+  it("rejects an expires_at in the past or not parseable", async () => {
+    const past = await postJson(app.base, "/links", {
+      target_url: "https://example.com/e",
+      expires_at: "2020-01-01T00:00:00Z",
+    });
+    expect(past.status).toBe(400);
+    const junk = await postJson(app.base, "/links", {
+      target_url: "https://example.com/e",
+      expires_at: "next tuesday",
+    });
+    expect(junk.status).toBe(400);
+  });
+
+  it("returns 410 with an HTML page for an expired link and records no click", async () => {
+    app.store.add({
+      slug: "old111",
+      target_url: "https://example.com/old",
+      created_at: "2026-01-01T00:00:00Z",
+      expires_at: "2026-02-01T00:00:00Z",
+    });
+    const res = await fetch(`${app.base}/old111`, { redirect: "manual" });
+    expect(res.status).toBe(410);
+    expect(res.headers.get("content-type")).toMatch(/text\/html/);
+    expect(await res.text()).toContain("expired");
+    expect(app.store.clicks()).toHaveLength(0);
+  });
+
+  it("lists expires_at as null when a link has none", async () => {
+    await postJson(app.base, "/links", { target_url: "https://example.com/plain" });
+    const [link] = await (await fetch(`${app.base}/api/links`)).json();
+    expect(link.expires_at).toBeNull();
   });
 });
 

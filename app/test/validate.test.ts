@@ -1,5 +1,11 @@
 import { describe, expect, it } from "vitest";
-import { generateSlug, isValidSlug, validateTargetUrl } from "../src/validate.js";
+import {
+  generateSlug,
+  isExpired,
+  isValidSlug,
+  validateExpiresAt,
+  validateTargetUrl,
+} from "../src/validate.js";
 
 describe("slugs", () => {
   it("accepts letters, digits, dash and underscore between 3 and 32 chars", () => {
@@ -22,6 +28,28 @@ describe("slugs", () => {
     expect(slug).toHaveLength(6);
     expect(isValidSlug(slug)).toBe(true);
     expect(slug).not.toMatch(/[01ol]/);
+  });
+});
+
+describe("expires_at", () => {
+  const now = Date.parse("2026-09-01T12:00:00Z");
+
+  it("accepts absent, null, or a future ISO date", () => {
+    expect(validateExpiresAt(undefined, now)).toBeNull();
+    expect(validateExpiresAt(null, now)).toBeNull();
+    expect(validateExpiresAt("2026-09-02T12:00:00Z", now)).toBeNull();
+  });
+
+  it("rejects the past and non-dates", () => {
+    expect(validateExpiresAt("2026-08-31T12:00:00Z", now)).toMatch(/future/);
+    expect(validateExpiresAt("soon", now)).toMatch(/ISO 8601/);
+    expect(validateExpiresAt(42, now)).toMatch(/ISO 8601/);
+  });
+
+  it("knows an expired link from a live one", () => {
+    expect(isExpired({ expires_at: "2026-08-31T12:00:00Z" }, now)).toBe(true);
+    expect(isExpired({ expires_at: "2026-09-02T12:00:00Z" }, now)).toBe(false);
+    expect(isExpired({ expires_at: null }, now)).toBe(false);
   });
 });
 

@@ -1,6 +1,12 @@
 import type { IncomingMessage, ServerResponse } from "node:http";
 import type { Click, Link, Store } from "../store.js";
-import { generateSlug, isValidSlug, validateTargetUrl } from "../validate.js";
+import {
+  generateSlug,
+  isExpired,
+  isValidSlug,
+  validateExpiresAt,
+  validateTargetUrl,
+} from "../validate.js";
 
 /** The largest request body `readJsonBody` buffers; anything bigger is answered with 413. */
 export const MAX_BODY_BYTES = 64 * 1024;
@@ -56,6 +62,9 @@ export async function createLink(req: IncomingMessage, res: ServerResponse, stor
   const problem = validateTargetUrl((body as any).target_url);
   if (problem) return sendJson(res, 400, { error: problem });
 
+  const expiresProblem = validateExpiresAt(body.expires_at);
+  if (expiresProblem) return sendJson(res, 400, { error: expiresProblem });
+
   let slug = generateSlug();
   while (store.has(slug)) slug = generateSlug();
 
@@ -63,20 +72,25 @@ export async function createLink(req: IncomingMessage, res: ServerResponse, stor
     slug,
     target_url: String(body.target_url).trim(),
     created_at: new Date().toISOString(),
+    expires_at:
+      typeof body.expires_at === "string" ? new Date(body.expires_at).toISOString() : null,
   };
   store.add(link);
   return sendJson(res, 201, link);
 }
 
-/** GET /api/links — every link, newest first (equal timestamps keep insertion order). */
+/** GET /api/links — every link, newest first (equal timestamps keep insertion order), always with an expires_at (null when none). */
 export function listLinks(_req: IncomingMessage, res: ServerResponse, store: Store) {
-  const links = store.list().sort((a, b) => b.created_at.localeCompare(a.created_at));
+  const links = store
+    .list()
+    .sort((a, b) => b.created_at.localeCompare(a.created_at))
+    .map((l) => ({ ...l, expires_at: l.expires_at ?? null }));
   return sendJson(res, 200, links);
 }
 
 interface Stats {
   total_clicks: number;
-  top_links: { slug: string; target_url: string; clicks: number }[];
+  top_links: { slug: string; target_url: string; clicks: number; expired: boolean }[];
   by_day: { day: string; clicks: number }[];
   by_referrer: { referrer: string; clicks: number }[];
 }
@@ -112,7 +126,10 @@ export function stats(_req: IncomingMessage, res: ServerResponse, store: Store, 
   const top_links = [...perSlug.entries()]
     .sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]))
     .slice(0, 10)
-    .map(([slug, clicks]) => ({ slug, target_url: store.get(slug)!.target_url, clicks }));
+    .map(([slug, clicks]) => {
+      const link = store.get(slug)!;
+      return { slug, target_url: link.target_url, clicks, expired: isExpired(link) };
+    });
 
   const by_day = [...perDay.entries()]
     .sort((a, b) => a[0].localeCompare(b[0]))

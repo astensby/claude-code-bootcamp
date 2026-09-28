@@ -1,6 +1,6 @@
 import type { IncomingMessage, ServerResponse } from "node:http";
 import type { Store } from "./store.js";
-import { isValidSlug, SLUG_RE } from "./validate.js";
+import { isExpired, isValidSlug, SLUG_RE } from "./validate.js";
 
 function deviceOf(userAgent: any): string {
   const ua = userAgent.toLowerCase();
@@ -24,6 +24,7 @@ export function redirect(req: IncomingMessage, res: ServerResponse, store: Store
 
   const link = store.get(slug);
   if (!link) return notFound(res);
+  if (isExpired(link)) return gone(res);
 
   const referer: any = req.headers.referer;
   if (req.method !== "HEAD") {
@@ -38,6 +39,16 @@ export function redirect(req: IncomingMessage, res: ServerResponse, store: Store
 
   res.writeHead(302, { location: store.get(slug)!.target_url });
   res.end();
+}
+
+/** 410 for a person mid-redirect: a page, not JSON, and no click counted. */
+function gone(res: ServerResponse) {
+  res.writeHead(410, { "content-type": "text/html; charset=utf-8" });
+  res.end(`<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><title>Link expired</title>
+<style>body{font:16px/1.5 system-ui,sans-serif;max-width:32rem;margin:4rem auto;padding:0 1rem}</style></head>
+<body><h1>This link has expired</h1><p>The short link you followed is no longer active. Ask whoever shared it for a fresh one.</p></body></html>
+`);
 }
 
 function notFound(res: ServerResponse) {

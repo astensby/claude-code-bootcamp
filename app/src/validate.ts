@@ -17,6 +17,20 @@ export function validateTargetUrl(value: unknown): string | null {
   return null;
 }
 
+/** Returns an error message, or null. Absent or null is fine: the link never expires. */
+export function validateExpiresAt(value: unknown, now: number = Date.now()): string | null {
+  if (value === undefined || value === null) return null;
+  if (typeof value !== "string") return "expires_at must be an ISO 8601 date";
+  const t = Date.parse(value);
+  if (Number.isNaN(t)) return "expires_at must be an ISO 8601 date";
+  if (t <= now) return "expires_at must be in the future";
+  return null;
+}
+
+export function isExpired(link: { expires_at?: string | null }, now: number = Date.now()): boolean {
+  return typeof link.expires_at === "string" && Date.parse(link.expires_at) <= now;
+}
+
 export function generateSlug(random: () => number = Math.random, length = 6): string {
   let out = "";
   for (let i = 0; i < length; i++) {
