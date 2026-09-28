@@ -1,0 +1,54 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>linkr</title>
+  <style>
+    :root { color-scheme: light dark; }
+    body { font: 16px/1.5 system-ui, sans-serif; max-width: 40rem; margin: 3rem auto; padding: 0 1rem; }
+    h1 { font-size: 1.5rem; }
+    form { display: flex; gap: .5rem; }
+    input { flex: 1; font: inherit; padding: .5rem .75rem; }
+    button { font: inherit; padding: .5rem 1rem; cursor: pointer; }
+    #result { margin-top: 1.5rem; padding: 1rem; border: 1px solid #8884; border-radius: .5rem; }
+    #result[hidden] { display: none; }
+    .err { color: #c33; }
+    nav a { margin-right: 1rem; }
+  </style>
+</head>
+<body>
+  <nav><a href="/">Create</a><a href="/links">All links</a></nav>
+  <h1>Shorten a link</h1>
+  <form id="f">
+    <input id="url" name="target_url" placeholder="https://example.com/a/very/long/path" />
+    <button type="submit">Shorten</button>
+  </form>
+  <div id="result" hidden></div>
+  <script>
+    const f = document.getElementById("f");
+    const out = document.getElementById("result");
+    f.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const target_url = document.getElementById("url").value;
+      const res = await fetch("/links", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ target_url }),
+      });
+      const body = await res.json();
+      out.hidden = false;
+      if (!res.ok) {
+        out.innerHTML = '<span class="err"></span>';
+        out.firstChild.textContent = body.error ?? res.status;
+        return;
+      }
+      const short = `${location.origin}/${body.slug}`;
+      out.innerHTML = 'Short link: <a></a>';
+      const a = out.querySelector("a");
+      a.href = short;
+      a.textContent = short;
+    });
+  </script>
+</body>
+</html>

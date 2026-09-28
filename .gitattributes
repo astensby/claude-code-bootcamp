@@ -1,0 +1,2 @@
+# The data/alt snapshots come from their sources with CRLF line endings; keep them byte-for-byte.
+data/alt/*.csv -text

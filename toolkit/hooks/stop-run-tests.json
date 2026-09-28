@@ -1,0 +1,15 @@
+{
+  "hooks": {
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash \"$CLAUDE_PROJECT_DIR/toolkit/hooks/stop-run-tests.sh\"",
+            "timeout": 60
+          }
+        ]
+      }
+    ]
+  }
+}

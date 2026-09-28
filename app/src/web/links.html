@@ -1,0 +1,49 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>linkr · links</title>
+  <style>
+    :root { color-scheme: light dark; }
+    body { font: 16px/1.5 system-ui, sans-serif; max-width: 60rem; margin: 3rem auto; padding: 0 1rem; }
+    h1 { font-size: 1.5rem; }
+    table { border-collapse: collapse; width: 100%; }
+    th, td { text-align: left; padding: .4rem .6rem; border-bottom: 1px solid #8884; }
+    td.url { max-width: 30rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    nav a { margin-right: 1rem; }
+  </style>
+</head>
+<body>
+  <nav><a href="/">Create</a><a href="/links">All links</a></nav>
+  <h1>All links</h1>
+  <p id="count"></p>
+  <table>
+    <thead><tr><th>Slug</th><th>Target</th><th>Created</th></tr></thead>
+    <tbody id="rows"></tbody>
+  </table>
+  <script>
+    (async () => {
+      const res = await fetch("/api/links");
+      const links = await res.json();
+      document.getElementById("count").textContent = `${links.length} links`;
+      const tbody = document.getElementById("rows");
+      for (const l of links) {
+        const tr = document.createElement("tr");
+        const slug = document.createElement("td");
+        const a = document.createElement("a");
+        a.href = `/${l.slug}`;
+        a.textContent = l.slug;
+        slug.append(a);
+        const url = document.createElement("td");
+        url.className = "url";
+        url.textContent = l.target_url;
+        const created = document.createElement("td");
+        created.textContent = l.created_at.slice(0, 16).replace("T", " ");
+        tr.append(slug, url, created);
+        tbody.append(tr);
+      }
+    })();
+  </script>
+</body>
+</html>

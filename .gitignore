@@ -1,0 +1,14 @@
+node_modules/
+.data/
+.tmp/
+*.log
+.DS_Store
+.env
+.env.*
+!.env.example
+.claude/worktrees/
+reviews/
+.claude/settings.local.json
+CLAUDE.local.md
+.idea/
+.vscode/

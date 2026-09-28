@@ -1,0 +1,21 @@
+campaign_id,name,channel,start,end
+cmp-01,Summer launch,organic,2026-08-10,2026-08-26
+cmp-02,Back to work,paid,2026-08-14,2026-08-24
+cmp-03,Q3 webinar series,organic,2026-07-18,2026-08-07
+cmp-04,Product hunt,organic,2026-08-01,2026-08-13
+cmp-05,Partner week,email,2026-08-20,2026-09-02
+cmp-06,Oslo meetup,partner,2026-08-03,2026-08-24
+cmp-07,Security whitepaper,organic,2026-06-29,2026-07-15
+cmp-08,Onboarding drip,email,2026-07-02,2026-07-21
+cmp-09,August release,email,2026-08-24,2026-09-06
+cmp-10,Case study push,email,2026-08-22,2026-09-09
+cmp-11,Careers push,paid,2026-07-11,2026-08-04
+cmp-12,Retail vertical,paid,2026-08-24,2026-09-06
+cmp-13,Docs relaunch,paid,2026-07-01,2026-07-09
+cmp-14,Podcast season 2,partner,2026-08-09,2026-08-21
+cmp-15,Referral program,partner,2026-07-13,2026-07-26
+cmp-16,Pricing update,social,2026-08-28,2026-09-14
+cmp-17,Founders letter,email,2026-07-18,2026-07-31
+cmp-18,API v2,partner,2026-08-14,2026-09-04
+cmp-19,Analytics beta,organic,2026-09-01,2026-09-09
+cmp-20,Autumn campaign,email,2026-07-29,2026-08-24

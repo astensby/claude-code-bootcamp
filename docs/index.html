@@ -1,0 +1,732 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Companion guide · Claude Code for Developers bootcamp</title>
+<meta name="description" content="A guided tour of the bootcamp repository: setup, the day, the files, the exercises, the app, the backlog, the toolkit, the solutions, and the take-home.">
+<style>
+:root{
+  color-scheme:light;
+  --bg:#f3ecdd; --bg-2:#faf6ec; --bg-3:#efe6d3; --line:#d6cbb2; --line-soft:#e4dbc6;
+  --fg:#17130e; --fg-dim:#4a4235; --fg-faint:#6f6555;
+  --accent:#b95a33; --accent-text:#9a4826; --accent-ink:#fff8ee; --accent-soft:rgba(185,90,51,.12);
+  --ok:#4f6a30; --code-bg:#fffaf0;
+  --serif:"Iowan Old Style","Palatino Linotype",Palatino,Georgia,"Times New Roman",serif;
+  --sans:-apple-system,BlinkMacSystemFont,"Segoe UI",Inter,Roboto,"Helvetica Neue",Arial,sans-serif;
+  --mono:ui-monospace,"SF Mono",Menlo,Consolas,"Liberation Mono",monospace;
+}
+@media (prefers-color-scheme: dark){
+  :root{
+    color-scheme:dark;
+    --bg:#17130e; --bg-2:#1f1a13; --bg-3:#28221a; --line:#3a3226; --line-soft:#2c261c;
+    --fg:#ece3d2; --fg-dim:#cfc5ab; --fg-faint:#9a9078;
+    --accent:#d3744b; --accent-text:#e8895e; --accent-ink:#17130e; --accent-soft:rgba(211,116,75,.14);
+    --ok:#8fa86f; --code-bg:#100d09;
+  }
+}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+body{margin:0;background:var(--bg);color:var(--fg);font-family:var(--sans);font-size:16px;line-height:1.55;padding-inline:16px;padding-block:0 48px}
+a{color:var(--accent-text)}
+h1,h2,h3{font-family:var(--serif);font-weight:500;line-height:1.15;text-wrap:balance;margin:0}
+h1{font-size:clamp(28px,4vw,40px)}
+h2{font-size:clamp(24px,3vw,32px)}
+h3{font-size:19px;margin-top:6px}
+p{margin:0}
+code,pre,kbd{font-family:var(--mono);font-size:.86em}
+code{background:var(--bg-3);padding:.1em .35em;border-radius:3px;color:var(--fg)}
+pre{background:var(--code-bg);border:1px solid var(--line);border-radius:6px;padding:12px 14px;overflow-x:auto;margin:0;line-height:1.5;font-size:13.5px}
+pre code{background:none;padding:0;font-size:inherit}
+.eyebrow{font-family:var(--mono);font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--fg-faint)}
+.wrap{max-width:1180px;margin:0 auto}
+header.top{display:flex;flex-wrap:wrap;align-items:end;justify-content:space-between;gap:12px 24px;padding-block:28px 18px;border-bottom:1px solid var(--line)}
+header.top .sub{color:var(--fg-dim);font-size:15px;margin-top:6px;max-width:62ch}
+.progress{font-family:var(--mono);font-size:13px;color:var(--fg-dim);display:flex;align-items:center;gap:10px}
+.progress .bar{width:140px;height:4px;background:var(--line-soft);border-radius:2px;overflow:hidden}
+.progress .bar i{display:block;height:100%;background:var(--accent);width:11%;transition:width .3s}
+.layout{display:grid;grid-template-columns:230px minmax(0,1fr);gap:32px;padding-top:24px}
+nav.rail{position:sticky;top:0;align-self:start;display:flex;flex-direction:column;gap:2px;padding-top:6px}
+nav.rail button{all:unset;cursor:pointer;display:grid;grid-template-columns:26px 1fr;gap:8px;align-items:baseline;padding:8px 10px;border-radius:5px;color:var(--fg-dim);font-family:var(--sans);font-size:14.5px;line-height:1.3}
+nav.rail button .n{font-family:var(--mono);font-size:12px;color:var(--fg-faint)}
+nav.rail button:hover{background:var(--bg-2);color:var(--fg)}
+nav.rail button[aria-current="true"]{background:var(--accent-soft);color:var(--fg)}
+nav.rail button[aria-current="true"] .n{color:var(--accent-text)}
+nav.rail button:focus-visible{outline:2px solid var(--accent);outline-offset:1px}
+main{min-width:0}
+section.stop{display:flex;flex-direction:column;gap:22px}
+.lede{font-size:17.5px;color:var(--fg-dim);max-width:66ch}
+.lede strong{color:var(--fg);font-weight:600}
+.prose{max-width:68ch;display:flex;flex-direction:column;gap:12px}
+.prose p{color:var(--fg-dim)}
+.prose p strong{color:var(--fg)}
+.facts{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px}
+.fact{border:1px solid var(--line);border-radius:6px;padding:14px 16px;background:var(--bg-2);display:flex;flex-direction:column;gap:4px}
+.fact .k{font-family:var(--serif);font-size:26px;line-height:1.1}
+.fact .v{color:var(--fg-dim);font-size:14px}
+table{border-collapse:collapse;width:100%;font-size:14.5px}
+.tablewrap{overflow-x:auto;border:1px solid var(--line);border-radius:6px}
+th,td{text-align:left;vertical-align:top;padding:9px 12px;border-bottom:1px solid var(--line-soft)}
+th{font-family:var(--mono);font-size:12px;letter-spacing:.06em;text-transform:uppercase;color:var(--fg-faint);font-weight:500;background:var(--bg-2)}
+tr:last-child td{border-bottom:0}
+td.mono,th.mono{font-family:var(--mono);font-size:13px;white-space:nowrap}
+.timeline{display:flex;flex-direction:column;gap:0;border-left:2px solid var(--line);margin-left:6px}
+.tl{display:grid;grid-template-columns:110px minmax(0,1fr);gap:16px;padding:12px 0 12px 18px;position:relative}
+.tl::before{content:"";position:absolute;left:-7px;top:19px;width:12px;height:12px;border-radius:50%;background:var(--bg);border:2px solid var(--accent)}
+.tl.break::before{border-color:var(--fg-faint)}
+.tl .when{font-family:var(--mono);font-size:13px;color:var(--fg-dim);padding-top:2px;font-variant-numeric:tabular-nums}
+.tl .what{display:flex;flex-direction:column;gap:4px}
+.tl .what b{font-weight:600}
+.tl .what span{color:var(--fg-dim);font-size:14.5px}
+.split{display:grid;grid-template-columns:minmax(260px,1fr) minmax(0,1.2fr);gap:20px;align-items:start}
+.tree{font-family:var(--mono);font-size:13.5px;line-height:1.7;background:var(--code-bg);border:1px solid var(--line);border-radius:6px;padding:12px 10px;overflow-x:auto}
+.tree ul{list-style:none;margin:0;padding-left:18px}
+.tree>ul{padding-left:4px}
+.tree li{white-space:nowrap}
+.tree button{all:unset;cursor:pointer;padding:1px 6px;border-radius:3px;color:var(--fg)}
+.tree button:hover{background:var(--bg-3)}
+.tree button[aria-current="true"]{background:var(--accent-soft);color:var(--accent-text)}
+.tree button:focus-visible{outline:2px solid var(--accent)}
+.tree .dir::before{content:"▸ ";color:var(--fg-faint)}
+.tree .dir[aria-expanded="true"]::before{content:"▾ "}
+.tree .file::before{content:"· ";color:var(--fg-faint)}
+.tree .empty::before{content:"▫ ";color:var(--fg-faint)}
+.detail{border:1px solid var(--line);border-radius:6px;background:var(--bg-2);padding:16px 18px;display:flex;flex-direction:column;gap:8px;position:sticky;top:12px}
+.detail .path{font-family:var(--mono);font-size:13px;color:var(--accent-text)}
+.detail p{color:var(--fg-dim);font-size:15px}
+.cards{display:flex;flex-direction:column;gap:16px}
+.card{border:1px solid var(--line);border-radius:6px;background:var(--bg-2);padding:18px 20px;display:flex;flex-direction:column;gap:10px}
+.card .head{display:flex;flex-wrap:wrap;align-items:baseline;gap:8px 14px}
+.card .head h3{margin:0}
+.card .meta{font-family:var(--mono);font-size:12.5px;color:var(--fg-faint)}
+.card .goal{color:var(--fg-dim);font-size:15px;max-width:72ch}
+.card .goal code{font-size:.9em}
+.steps{margin:0;padding-left:22px;display:flex;flex-direction:column;gap:5px;font-size:15px;max-width:72ch}
+.steps li::marker{font-family:var(--mono);color:var(--accent-text)}
+.prompt{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:8px;align-items:start;margin:5px 0 3px;padding:8px 10px;border:1px solid var(--line-soft);border-radius:5px;background:var(--bg-3)}
+.prompt .ptext{font-style:italic;color:var(--fg-dim);font-size:14px;line-height:1.5}
+.steps li{line-height:1.5}
+.done{border-left:3px solid var(--ok);padding:6px 12px;background:var(--bg-3);border-radius:0 4px 4px 0;font-size:14.5px}
+.done b{color:var(--ok);font-family:var(--mono);font-size:12px;letter-spacing:.06em;text-transform:uppercase;margin-right:8px}
+details{border-top:1px solid var(--line-soft);padding-top:8px}
+details summary{cursor:pointer;font-family:var(--mono);font-size:13px;color:var(--fg-dim);list-style:none;display:flex;align-items:center;gap:8px}
+details summary::-webkit-details-marker{display:none}
+details summary::before{content:"▸";color:var(--fg-faint)}
+details[open] summary::before{content:"▾"}
+details summary:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+details .body{padding:10px 0 4px;display:flex;flex-direction:column;gap:8px;font-size:14.5px;color:var(--fg-dim);max-width:72ch}
+details .body ul{margin:0;padding-left:20px;display:flex;flex-direction:column;gap:4px}
+details .body b{color:var(--fg)}
+.cmd{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:8px;align-items:start}
+.copy{all:unset;cursor:pointer;font-family:var(--mono);font-size:12px;padding:6px 10px;border:1px solid var(--line);border-radius:4px;color:var(--fg-dim);background:var(--bg-2);white-space:nowrap}
+.copy:hover{border-color:var(--accent);color:var(--accent-text)}
+.copy:focus-visible{outline:2px solid var(--accent)}
+.copy.did{border-color:var(--ok);color:var(--ok)}
+.chips{display:flex;flex-wrap:wrap;gap:8px}
+.chip{all:unset;cursor:pointer;font-family:var(--mono);font-size:12.5px;padding:5px 11px;border-radius:999px;border:1px solid var(--line);color:var(--fg-dim)}
+.chip:hover{border-color:var(--accent)}
+.chip[aria-pressed="true"]{background:var(--accent-text);color:var(--accent-ink);border-color:var(--accent-text)}
+.chip:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.issues{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:14px}
+.issue{border:1px solid var(--line);border-radius:6px;background:var(--bg-2);padding:14px 16px;display:flex;flex-direction:column;gap:8px}
+.issue .num{font-family:var(--serif);font-size:24px;color:var(--accent-text);line-height:1}
+.issue h3{font-size:17px}
+.issue p{color:var(--fg-dim);font-size:14px}
+.issue .use{font-family:var(--mono);font-size:12px;color:var(--fg-faint)}
+.groups{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:16px}
+.group{border:1px solid var(--line);border-radius:6px;background:var(--bg-2);padding:14px 16px}
+.group h3{font-size:17px;margin:0 0 8px}
+.group dl{margin:0;display:grid;grid-template-columns:auto 1fr;gap:6px 12px;font-size:14px}
+.group dt{font-family:var(--mono);font-size:12.5px;color:var(--accent-text);white-space:nowrap}
+.group dd{margin:0;color:var(--fg-dim)}
+.chain{display:flex;align-items:stretch;gap:0;overflow-x:auto;padding:10px 4px 6px}
+.node{position:relative;min-width:150px;flex:1;padding:14px 12px 10px;display:flex;flex-direction:column;gap:4px}
+.node::before{content:"";position:absolute;left:0;right:0;top:0;height:2px;background:var(--line)}
+.node::after{content:"";position:absolute;left:12px;top:-5px;width:12px;height:12px;border-radius:50%;background:var(--accent);border:2px solid var(--bg)}
+.node.root::after{background:var(--fg)}
+.node .tag{font-family:var(--mono);font-size:13px;color:var(--accent-text)}
+.node.root .tag{color:var(--fg)}
+.node .state{font-size:13.5px;color:var(--fg-dim)}
+.check{display:flex;flex-direction:column;gap:6px}
+.check label{display:grid;grid-template-columns:22px 1fr;gap:10px;align-items:start;padding:8px 10px;border:1px solid var(--line-soft);border-radius:5px;background:var(--bg-2);font-size:14.5px;cursor:pointer}
+.check label:has(input:checked){border-color:var(--ok);color:var(--fg-dim)}
+.check label:has(input:checked) span{text-decoration:line-through;text-decoration-color:var(--fg-faint)}
+.check input{margin:3px 0 0;accent-color:var(--accent)}
+.pager{display:flex;justify-content:space-between;gap:12px;padding-top:12px;border-top:1px solid var(--line);margin-top:8px}
+.pager button{all:unset;cursor:pointer;font-family:var(--mono);font-size:13.5px;padding:10px 14px;border:1px solid var(--line);border-radius:5px;color:var(--fg)}
+.pager button:hover{border-color:var(--accent);color:var(--accent-text)}
+.pager button:focus-visible{outline:2px solid var(--accent)}
+.pager button[disabled]{opacity:.35;cursor:default}
+.kbd-hint{font-family:var(--mono);font-size:12px;color:var(--fg-faint)}
+ul.plain,ol.plain{margin:0;padding-left:20px;display:flex;flex-direction:column;gap:6px;font-size:15px;color:var(--fg-dim);max-width:72ch}
+ul.plain b,ol.plain b{color:var(--fg);font-weight:600}
+@media (max-width:820px){
+  .layout{grid-template-columns:1fr;gap:18px}
+  nav.rail{position:static;flex-direction:row;overflow-x:auto;gap:6px;padding-bottom:6px;margin-inline:-16px;padding-inline:16px;scrollbar-width:none}
+  nav.rail button{grid-template-columns:auto auto;white-space:nowrap;padding:7px 10px;border:1px solid var(--line-soft);font-size:13.5px}
+  .split{grid-template-columns:1fr}
+  .detail{position:static}
+  .tl{grid-template-columns:1fr;gap:4px}
+  .progress .bar{width:90px}
+  .pager .kbd-hint{display:none}
+}
+@media (prefers-reduced-motion: reduce){ .progress .bar i{transition:none} }
+</style>
+<noscript><style>section.stop[hidden]{display:flex!important}nav.rail,.pager,.progress{display:none}</style></noscript>
+</head>
+<body>
+
+<div class="wrap">
+<header class="top">
+  <div>
+    <div class="eyebrow">Claude Code for Developers · bootcamp repository</div>
+    <h1>Companion guide</h1>
+    <p class="sub">Nine short stops through the repository: what to set up, what happens on the day, and where everything is. Use the rail, the buttons at the bottom of each stop, or the ← → keys. The page reopens where you left off; press 1 in the rail to start over.</p>
+  </div>
+  <div class="progress" aria-live="polite"><span id="prog-text">Stop 1 of 9</span><span class="bar"><i id="prog-bar"></i></span></div>
+</header>
+
+<div class="layout">
+<nav class="rail" aria-label="Guide stops">
+  <button data-stop="start"><span class="n">1</span><span>Start here</span></button>
+  <button data-stop="day"><span class="n">2</span><span>The day</span></button>
+  <button data-stop="files"><span class="n">3</span><span>The files</span></button>
+  <button data-stop="exercises"><span class="n">4</span><span>The exercises</span></button>
+  <button data-stop="app"><span class="n">5</span><span>The app: linkr</span></button>
+  <button data-stop="backlog"><span class="n">6</span><span>The backlog</span></button>
+  <button data-stop="toolkit"><span class="n">7</span><span>The toolkit</span></button>
+  <button data-stop="solutions"><span class="n">8</span><span>Solutions and tags</span></button>
+  <button data-stop="home"><span class="n">9</span><span>Take it home</span></button>
+</nav>
+
+<main>
+
+<!-- 1 ─────────────────────────────────────────────── -->
+<section class="stop" id="stop-start">
+  <div class="eyebrow">Stop 1 · Start here</div>
+  <h2>What this repository is</h2>
+  <p class="lede">This is the repository for the <strong>Claude Code for Developers</strong> bootcamp. It holds the exercises for the day, a small app to practise on with its data and a backlog of issues, and a toolkit of reference skills, agents, hooks and goals you can copy into your own projects. Every exercise works on your own data or your own repo first; this repo is what you use when you have nothing to bring.</p>
+  <div class="facts">
+    <div class="fact"><span class="k">5 exercises</span><span class="v">One day in four blocks, with one demo and one take-home. Stop 2 has the timetable.</span></div>
+    <div class="fact"><span class="k">8 issues</span><span class="v">In <code>BACKLOG.md</code>, each with an acceptance list. <code>scripts/seed-issues.sh</code> creates them in your repo.</span></div>
+    <div class="fact"><span class="k">27 tests</span><span class="v">Vitest, under five seconds. Lint reports 37 warnings on purpose; that is issue #7.</span></div>
+    <div class="fact"><span class="k">5 tags</span><span class="v"><code>ex2-start</code> to <code>ex5-done</code>: the finished state of every exercise, for when you fall behind.</span></div>
+  </div>
+  <div class="prose">
+    <h3>Set up before the day</h3>
+    <p>One click and five commands. On <a href="https://github.com/astensby/claude-code-bootcamp">github.com/astensby/claude-code-bootcamp</a> click <strong>Use this template</strong> and create <code>&lt;you&gt;/claude-code-bootcamp</code>. Private is fine. Then, with <code>&lt;you&gt;</code> replaced by your GitHub user name:</p>
+  </div>
+  <div class="cmd"><pre><code>git clone https://github.com/&lt;you&gt;/claude-code-bootcamp &amp;&amp; cd claude-code-bootcamp
+git remote add upstream https://github.com/astensby/claude-code-bootcamp &amp;&amp; git fetch upstream --tags
+gh repo set-default &lt;you&gt;/claude-code-bootcamp
+npm ci
+scripts/preflight.sh</code></pre><button class="copy" aria-label="Copy the setup commands" data-copy="git clone https://github.com/&lt;you&gt;/claude-code-bootcamp &amp;&amp; cd claude-code-bootcamp &amp;&amp; git remote add upstream https://github.com/astensby/claude-code-bootcamp &amp;&amp; git fetch upstream --tags &amp;&amp; gh repo set-default &lt;you&gt;/claude-code-bootcamp &amp;&amp; npm ci &amp;&amp; scripts/preflight.sh">copy</button></div>
+  <p class="lede" style="font-size:15px">The copy button chains the five commands with <code>&amp;&amp;</code>, so a failed clone stops the rest. Replace <code>&lt;you&gt;</code> before you press Enter.</p>
+  <ul class="plain">
+    <li><b>Why the upstream remote:</b> templates copy files only. The tags and the <code>solutions</code> branch come from upstream, which is public.</li>
+    <li><b>Why set-default:</b> otherwise <code>gh</code> picks <code>upstream</code>, and your issues and PRs would land in the template repo.</li>
+    <li><b>Preflight</b> prints one green/red table: Node 22 or newer, npm, git, Claude Code and its login, <code>gh</code> and its login, <code>gh</code> pointing at your own repo, the install and the tests. Fix anything red before the day; if you are attending the bootcamp, reply to the invitation email with the output and we help.</li>
+  </ul>
+  <div class="prose">
+    <h3>On the day</h3>
+    <p>Before E2a, run <code>scripts/seed-issues.sh</code>. It creates the eight issues from <code>BACKLOG.md</code> in your repo, plus eight labels: <code>ex2</code> to <code>ex5</code> for the exercises and <code>ready</code>, <code>needs-spec</code>, <code>loop-review</code> for the loop. Templates do not copy issues. The script refuses to seed the template itself, and stops when <code>gh</code> cannot tell which repo is yours.</p>
+    <h3>Known bugs</h3>
+    <p>The app ships with three known bugs, listed as issues in the backlog: a bad URL is accepted (#5), lint debt (#7), and a README that documents a flag that does not exist (#8).</p>
+  </div>
+  <div class="pager"><button disabled>← Previous</button><span class="kbd-hint">← → to move</span><button data-go="next">Next: The day →</button></div>
+</section>
+
+<!-- 2 ─────────────────────────────────────────────── -->
+<section class="stop" id="stop-day" hidden>
+  <div class="eyebrow">Stop 2 · The day</div>
+  <h2>Four blocks, five exercises, one demo, one take-home</h2>
+  <p class="lede">Each exercise has four one-line steps and a time limit; the instructor shows them on a slide. Each doc in <code>exercises/</code> is the longer version: what we will do, prompts you can paste, what done looks like, and a way to catch up if you fall behind.</p>
+  <div class="timeline">
+    <div class="tl"><span class="when">09:00–10:00</span><div class="what"><b>Block 1 · Get started and first build</b><span>E1 · Data to interactive dashboard · 15 min · leaves <code>dashboard/index.html</code></span></div></div>
+    <div class="tl"><span class="when">10:00–12:00</span><div class="what"><b>Block 2 · Context, planning, memory and tools</b><span>E2a · Plan and brainstorm · 15 min · leaves <code>SPEC.md</code>, <code>options.html</code></span><span>E2b · CLAUDE.md · 10 min · leaves <code>CLAUDE.md</code>, the feature built</span></div></div>
+    <div class="tl break"><span class="when">12:00–12:30</span><div class="what"><b>Lunch</b><span>Run <code>/compact</code> before you go.</span></div></div>
+    <div class="tl"><span class="when">12:30–14:00</span><div class="what"><b>Block 3 · Skills, verification and guardrails</b><span>E3 · Build your own skill · 15 min · leaves <code>.claude/skills/&lt;yours&gt;/</code></span></div></div>
+    <div class="tl"><span class="when">14:00–15:30</span><div class="what"><b>Block 4 · Multi-agent workflows, review and loops</b><span>E4 · Two in parallel, one reviewer · 20 min (or the 45-minute long form) · leaves two PRs, a walkthrough, a merge</span><span>E5 · A goal that runs without you · 10-minute demo, the instructor runs it on this repo</span></div></div>
+    <div class="tl break"><span class="when">by Friday</span><div class="what"><b>Take-home · One loop by Friday</b><span>The same four steps in a repo of your own: copy check, the reviewer and loop.md; write one goal; run <code>/goal</code>; run <code>/reflect</code>. Stop 9 has the checklist.</span></div></div>
+  </div>
+  <div class="prose">
+    <h3>The compound question</h3>
+    <p>After every exercise we take two minutes together and answer one question: <strong>what went wrong, or what did I have to say twice?</strong> Then we pick the cheapest thing that catches it next time, in this order: a line in CLAUDE.md, a test, a hook, a skill. Write it down before the block ends. The setup you leave with should be made of lines like these, each one earned by something that actually happened.</p>
+  </div>
+  <div class="pager"><button data-go="prev">← Start here</button><span class="kbd-hint">Stop 2 of 9</span><button data-go="next">Next: The files →</button></div>
+</section>
+
+<!-- 3 ─────────────────────────────────────────────── -->
+<section class="stop" id="stop-files" hidden>
+  <div class="eyebrow">Stop 3 · The files</div>
+  <h2>What is where</h2>
+  <p class="lede">Click a folder to open it and a file to read what it is for. Nothing under <code>toolkit/</code> is active until you copy it into <code>.claude/</code>; that keeps reference material out of your context until you want it.</p>
+  <div class="split">
+    <div class="tree" id="tree">
+      <ul>
+        <li><button class="dir" aria-expanded="true" aria-current="true" data-d="exercises/" data-desc="The exercises, one file each. 00-format.md explains the shape they all share.">exercises/</button>
+          <ul>
+            <li><button class="file" data-d="exercises/00-format.md" data-desc="How every exercise is written, the compound question, and how the Stuck? lines work. Read this first.">00-format.md</button></li>
+            <li><button class="file" data-d="exercises/01-dashboard.md" data-desc="E1 · Data to interactive dashboard · block 1 · 15 min.">01-dashboard.md</button></li>
+            <li><button class="file" data-d="exercises/02a-plan-brainstorm.md" data-desc="E2a · Plan and brainstorm · block 2 · 15 min. An interview, an options page you click through, then SPEC.md.">02a-plan-brainstorm.md</button></li>
+            <li><button class="file" data-d="exercises/02b-claude-md.md" data-desc="E2b · CLAUDE.md · block 2 · 10 min. /init, prune it line by line, the work-style interview, and the E2a feature built meanwhile.">02b-claude-md.md</button></li>
+            <li><button class="file" data-d="exercises/03-your-skill.md" data-desc="E3 · Build your own skill · block 3 · 15 min. /check and the Stop hook are stretches.">03-your-skill.md</button></li>
+            <li><button class="file" data-d="exercises/04-two-in-parallel.md" data-desc="E4 · Two in parallel, one reviewer · block 4 · 20 min. Two worktrees, an HTML walkthrough, merge or send back.">04-two-in-parallel.md</button></li>
+            <li><button class="file" data-d="exercises/04-long-form.md" data-desc="E4 long form · 45 min. Three issues, the reviewer agent, merges that collide, WORKFLOW.md. For after the day, or for a group that finished the short form early.">04-long-form.md</button></li>
+            <li><button class="file" data-d="exercises/05-take-home.md" data-desc="E5 · the 10-minute demo (a goal, /goal, loop.md, /reflect) and the take-home by Friday in a repo of your own.">05-take-home.md</button></li>
+          </ul>
+        </li>
+        <li><button class="dir" aria-expanded="false" data-d="data/" data-desc="The linkr click export: 50 000 clicks over twelve weeks, 300 links, 20 campaigns.">data/</button>
+          <ul hidden>
+            <li><button class="file" data-d="data/clicks.csv" data-desc="50 000 rows: ts, slug, referrer, country, device.">clicks.csv</button></li>
+            <li><button class="file" data-d="data/links.csv" data-desc="300 rows: slug, target_url, created_at, owner, campaign_id.">links.csv</button></li>
+            <li><button class="file" data-d="data/campaigns.csv" data-desc="20 campaigns, each with a channel and a date window.">campaigns.csv</button></li>
+            <li><button class="file" data-d="data/README.md" data-desc="What every column means, and the two alternative datasets.">README.md</button></li>
+            <li><button class="dir" aria-expanded="false" data-d="data/alt/" data-desc="Two public Norwegian datasets, if you would rather not build on the app's own data: private cars by fuel type and municipality from Statistics Norway (357 municipalities, 2008 to 2025), and employers with 50 or more staff from Brønnøysundregistrene. Both under the NLOD 2.0 licence with attribution; FETCH.md says how they were fetched.">alt/</button>
+              <ul hidden>
+                <li><button class="file" data-d="data/alt/ssb-private-cars-by-fuel.csv" data-desc="38 556 rows. If you build E1 on this, issue #3 (CSV export) replaces #6 in E4.">ssb-private-cars-by-fuel.csv</button></li>
+                <li><button class="file" data-d="data/alt/brreg-employers-50plus.csv" data-desc="8 038 organisations. Sole proprietorships are left out because they are named after people.">brreg-employers-50plus.csv</button></li>
+                <li><button class="file" data-d="data/alt/FETCH.md" data-desc="How both files were fetched and filtered, step by step, so they can be regenerated.">FETCH.md</button></li>
+              </ul>
+            </li>
+          </ul>
+        </li>
+        <li><button class="dir" aria-expanded="false" data-d="app/" data-desc="linkr, a link shortener with click stats. node:http and a JSON-file store, no runtime dependencies. Everything runs from the repo root.">app/</button>
+          <ul hidden>
+            <li><button class="dir" aria-expanded="false" data-d="app/src/" data-desc="Five source files and two static pages.">src/</button>
+              <ul hidden>
+                <li><button class="file" data-d="app/src/server.ts" data-desc="The route table and startup. HEAD is answered like GET, a wrong method on a known path is 405 with an Allow header, an unknown path under /api/ is a JSON 404, and everything else is a slug lookup.">server.ts</button></li>
+                <li><button class="file" data-d="app/src/api/links.ts" data-desc="POST /links, GET /api/links, GET /api/stats. A strict ?since= parameter and a 64 KB body cap. Issues #2 and #4 both change this file.">api/links.ts</button></li>
+                <li><button class="file" data-d="app/src/redirect.ts" data-desc="GET /:slug records the click and redirects with 302. HEAD redirects without counting.">redirect.ts</button></li>
+                <li><button class="file" data-d="app/src/store.ts" data-desc="The JSON-file store: read once at start, written whole and atomically on every change, with a clear error on a corrupt file.">store.ts</button></li>
+                <li><button class="file" data-d="app/src/validate.ts" data-desc="Slug and URL rules, and slug generation. The URL check is where issue #5 lives.">validate.ts</button></li>
+                <li><button class="file" data-d="app/src/web/" data-desc="index.html (create a link) and links.html (list). Both render server data with textContent only.">web/</button></li>
+              </ul>
+            </li>
+            <li><button class="file" data-d="app/test/" data-desc="Three vitest files, 27 tests; the API and store tests each use their own temporary store.">test/</button></li>
+            <li><button class="file" data-d="app/README.md" data-desc="How to run it, the endpoints, the layout. Issue #8 is about this file.">README.md</button></li>
+          </ul>
+        </li>
+        <li><button class="file empty" data-d="dashboard/" data-desc="Empty to start with. E1 writes dashboard/index.html here; issue #6 serves it at /stats.">dashboard/</button></li>
+        <li><button class="file empty" data-d="goals/" data-desc="Empty to start with. The E5 demo and the take-home write goals/<name>.md here.">goals/</button></li>
+        <li><button class="file" data-d="BACKLOG.md" data-desc="The eight issues with acceptance lists and labels. scripts/seed-issues.sh reads this file and creates them in your repo with gh.">BACKLOG.md</button></li>
+        <li><button class="dir" aria-expanded="false" data-d="toolkit/" data-desc="Reference implementations you copy into .claude/ when you want them: skills, two agents, three hooks, four goals, the loop playbook, two check scripts and twenty skill ideas. Stop 7 lists them.">toolkit/</button>
+          <ul hidden>
+            <li><button class="file" data-d="toolkit/README.md" data-desc="The three shapes a check can take (skill, hook, subagent), what is in the folder, the hook contract, and how to copy.">README.md</button></li>
+            <li><button class="file" data-d="toolkit/skills/" data-desc="check, run-app, add-chart, handoff, dataset-profile, reflect, groom, groom-prep, pr-triage, pr-walkthrough.">skills/</button></li>
+            <li><button class="file" data-d="toolkit/agents/" data-desc="reviewer.md (reviews a PR against its acceptance list, runs the check script, never edits) and researcher.md (a read-only mapper of the codebase).">agents/</button></li>
+            <li><button class="file" data-d="toolkit/hooks/" data-desc="stop-run-tests (blocks a stop while the tests are red, at most three times per session), post-edit-format (Biome on every edit), notify-done (a macOS notification).">hooks/</button></li>
+            <li><button class="file" data-d="toolkit/goals/" data-desc="TEMPLATE.md and three filled-in goals: lint-debt, docs-drift and endpoint-tests.">goals/</button></li>
+            <li><button class="file" data-d="toolkit/loop/" data-desc="loop.md, the playbook template a repo keeps, and a README that explains the six steps and the two that stay human.">loop/</button></li>
+          </ul>
+        </li>
+        <li><button class="dir" aria-expanded="false" data-d="scripts/" data-desc="Setup and data tooling.">scripts/</button>
+          <ul hidden>
+            <li><button class="file" data-d="scripts/preflight.sh" data-desc="One green/red table: node, npm, git, claude and its login, gh and its login, gh pointing at your own repo, npm ci, npm test.">preflight.sh</button></li>
+            <li><button class="file" data-d="scripts/seed-issues.sh" data-desc="Creates the eight issues and the labels in your repo. Refuses to run against the template, and warns if GitHub numbers an issue differently from the backlog.">seed-issues.sh</button></li>
+            <li><button class="file" data-d="scripts/seed.ts" data-desc="Loads data/*.csv into the store so /api/stats matches data/. Seed before starting the server, or restart it after.">seed.ts</button></li>
+          </ul>
+        </li>
+        <li><button class="dir" aria-expanded="false" data-d=".claude/" data-desc="A permissions allowlist and nothing else. skills/, agents/ and rules/ are empty on purpose: E3, E4 and an E2b stretch fill them. There is no CLAUDE.md yet; E2b writes it.">.claude/</button>
+          <ul hidden>
+            <li><button class="file" data-d=".claude/settings.json" data-desc="Twelve allow rules: npm test, lint, dev and ci; gh pr view and list; gh issue list, view and create; git status, diff and log. Nothing pushes, merges or deletes.">settings.json</button></li>
+            <li><button class="file" data-d=".claude/README.md" data-desc="Explains each rule and why the folders are empty.">README.md</button></li>
+          </ul>
+        </li>
+        <li><button class="file" data-d=".github/workflows/ci.yml" data-desc="On every PR and every push to main: npm ci, npm test, npm run typecheck, npm run lint. CI is one of the PR gates in E4.">.github/workflows/ci.yml</button></li>
+        <li><button class="file" data-d="README.md" data-desc="The front door: setup, the day, the app commands, Stuck?, the layout.">README.md</button></li>
+        <li><button class="file" data-d="docs/index.html" data-desc="This guide.">docs/index.html</button></li>
+      </ul>
+    </div>
+    <aside class="detail" id="detail">
+      <span class="path">exercises/</span>
+      <p>The exercises, one file each. <code>00-format.md</code> explains the shape they all share.</p>
+    </aside>
+  </div>
+  <div class="pager"><button data-go="prev">← The day</button><span class="kbd-hint">Stop 3 of 9</span><button data-go="next">Next: The exercises →</button></div>
+</section>
+
+<!-- 4 ─────────────────────────────────────────────── -->
+<section class="stop" id="stop-exercises" hidden>
+  <div class="eyebrow">Stop 4 · The exercises</div>
+  <h2>Four lines per exercise, the details in the doc</h2>
+  <p class="lede">Every exercise doc has the same shape. The numbered steps are the short version. Prompts you can paste sit in the boxes under the steps, each with a copy button. Open Stretch, Compound and Stuck? on any card. The full text of each is in <code>exercises/</code>.</p>
+  <div class="cards">
+
+    <article class="card">
+      <div class="head"><h3>E1 · Data to interactive dashboard</h3><span class="meta">block 1 · 15 min · <code>exercises/01-dashboard.md</code></span></div>
+      <p class="goal">In this exercise we will take a dataset, find out what is in it, and build a single-file interactive HTML dashboard from it. Your own CSV, JSON or export first; the repo's <code>data/</code> if you have nothing to bring, or <code>data/alt/</code> for public data. Keep the linkr data if you want to serve the dashboard from the app later (issue #6).</p>
+      <ol class="steps">
+        <li><div class="prompt"><span class="ptext">Analyse @data/, or a file of your own, and explain what is in it</span><button class="copy" aria-label="Copy the E1 step 1 prompt" data-copy="Analyse @data/, or a file of your own, and explain what is in it">copy</button></div></li>
+        <li><div class="prompt"><span class="ptext">Show me the most interesting findings</span><button class="copy" aria-label="Copy the E1 step 2 prompt" data-copy="Show me the most interesting findings">copy</button></div></li>
+        <li>Build an interactive HTML dashboard from it<div class="prompt"><span class="ptext">Build a single-file interactive HTML dashboard at dashboard/index.html from @data/ that answers: which links get the most clicks, how traffic moves over the week, which referrers matter. List your assumptions at the end.</span><button class="copy" aria-label="Copy the E1 step 3 prompt" data-copy="Build a single-file interactive HTML dashboard at dashboard/index.html from @data/ that answers: which links get the most clicks, how traffic moves over the week, which referrers matter. List your assumptions at the end.">copy</button></div></li>
+        <li><div class="prompt"><span class="ptext">Open it. How can we make it better?</span><button class="copy" aria-label="Copy the E1 step 4 prompt" data-copy="Open it. How can we make it better?">copy</button></div></li>
+      </ol>
+      <div class="done"><b>Done when</b>The dashboard opens in a browser and one change you asked for is in.</div>
+      <details><summary>Stretch, Compound, Stuck?</summary><div class="body">
+        <ul><li>Ask it to open the page itself (with the Chrome extension or the desktop app's browser) and fix what it sees.</li><li>Ask <em>"what did you assume about the data?"</em> and check the answer against <code>data/clicks.csv</code>.</li><li>Copy <code>toolkit/skills/dataset-profile/</code> into <code>.claude/skills/</code> and run <code>/dataset-profile data/</code>.</li></ul>
+        <p><b>Compound:</b> what did you only notice once the page was open? Nobody checked it before you did; block 3 is where that changes.</p>
+        <p><b>Stuck?</b> Take the finished state from the next tag:</p>
+        <div class="cmd"><pre><code>git fetch upstream --tags
+git checkout ex2-start -- dashboard</code></pre><button class="copy" aria-label="Copy the E1 catch-up command" data-copy="git fetch upstream --tags && git checkout ex2-start -- dashboard">copy</button></div>
+      </div></details>
+    </article>
+
+    <article class="card">
+      <div class="head"><h3>E2a · Plan and brainstorm</h3><span class="meta">block 2 · 15 min · <code>exercises/02a-plan-brainstorm.md</code></span></div>
+      <p class="goal">In this exercise we will turn an idea into a spec before any code is written: an interview, three options as a page you can click through, then <code>SPEC.md</code>. A feature your dashboard does not have yet, or issue #1 (links can expire) if you want an open question the interview should find. Step 3 is the one to pay attention to: the same move reviews a PR in E4.</p>
+      <ol class="steps">
+        <li>Pick a feature for your dashboard, or issue #1 in the repo</li>
+        <li>"Interview me about it, one question at a time"<div class="prompt"><span class="ptext">Interview me about &lt;the feature | issue #1&gt;, one question at a time, and propose an answer for each question where you can. Stop when you could write a spec.</span><button class="copy" aria-label="Copy the E2a step 2 prompt" data-copy="Interview me about &lt;the feature | issue #1&gt;, one question at a time, and propose an answer for each question where you can. Stop when you could write a spec.">copy</button></div></li>
+        <li>"Show me three ways to build it, as one HTML page I can click through." Open it, pick one, say why<div class="prompt"><span class="ptext">Show me three ways to build this, as one HTML page at options.html I can click through: a sketch of each, what it costs, what it cannot do. No code yet.</span><button class="copy" aria-label="Copy the E2a step 3 prompt" data-copy="Show me three ways to build this, as one HTML page at options.html I can click through: a sketch of each, what it costs, what it cannot do. No code yet.">copy</button></div></li>
+        <li>"Write SPEC.md from what we agreed"<div class="prompt"><span class="ptext">Write SPEC.md from what we agreed: the behaviour, then acceptance criteria I can check one by one.</span><button class="copy" aria-label="Copy the E2a step 4 prompt" data-copy="Write SPEC.md from what we agreed: the behaviour, then acceptance criteria I can check one by one.">copy</button></div></li>
+      </ol>
+      <div class="done"><b>Done when</b><code>SPEC.md</code> exists with acceptance lines you can check, and you looked at <code>options.html</code> before choosing.</div>
+      <details><summary>Stretch, Compound, Stuck?</summary><div class="body">
+        <ul><li>Plan mode (<kbd>Shift+Tab</kbd>) for the interview: Claude can read and ask, but not write.</li><li>Plan the implementation of SPEC.md as numbered steps into <code>PLAN.md</code>, no code yet.</li><li>If you took issue #1: did the interview reach what happens to the stats of an expired link?</li></ul>
+        <p><b>Compound:</b> what did the interview surface that you had not thought of?</p>
+        <p><b>Stuck?</b> Take the finished state from the next tag:</p>
+        <div class="cmd"><pre><code>git fetch upstream --tags
+git checkout ex3-start -- SPEC.md</code></pre><button class="copy" aria-label="Copy the E2a catch-up command" data-copy="git fetch upstream --tags && git checkout ex3-start -- SPEC.md">copy</button></div>
+      </div></details>
+    </article>
+
+    <article class="card">
+      <div class="head"><h3>E2b · CLAUDE.md</h3><span class="meta">block 2 · 10 min · <code>exercises/02b-claude-md.md</code></span></div>
+      <p class="goal">In this exercise we will write a <code>CLAUDE.md</code> with <code>/init</code> and cut it down to the lines that earn their place, while Claude builds the E2a feature in a second terminal. Project facts go in the repo's <code>CLAUDE.md</code>, your habits in <code>~/.claude/CLAUDE.md</code>. This repo has no CLAUDE.md on purpose.</p>
+      <ol class="steps">
+        <li><code>/init</code></li>
+        <li>Delete every line the repo would tell it anyway<div class="prompt"><span class="ptext">For each line in CLAUDE.md, delete it if the repo itself would tell you the same thing (package.json, README, folder names, tests). Keep it under 30 lines.</span><button class="copy" aria-label="Copy the E2b step 2 prompt" data-copy="For each line in CLAUDE.md, delete it if the repo itself would tell you the same thing (package.json, README, folder names, tests). Keep it under 30 lines.">copy</button></div></li>
+        <li>"Interview me about how I like to work." Project facts go in <code>CLAUDE.md</code>, your habits in <code>~/.claude/CLAUDE.md</code><div class="prompt"><span class="ptext">Interview me about how I like to work, five questions at most. Put what is true of this repo into CLAUDE.md and what is true of me into ~/.claude/CLAUDE.md.</span><button class="copy" aria-label="Copy the E2b step 3 prompt" data-copy="Interview me about how I like to work, five questions at most. Put what is true of this repo into CLAUDE.md and what is true of me into ~/.claude/CLAUDE.md.">copy</button></div></li>
+        <li>Let it build <code>SPEC.md</code> while you prune. Does it follow the file? (Start it in a second terminal; it runs while you finish.)<div class="prompt"><span class="ptext">Implement SPEC.md. Plan first, then build. Run npm test before you report done.</span><button class="copy" aria-label="Copy the E2b step 4 prompt" data-copy="Implement SPEC.md. Plan first, then build. Run npm test before you report done.">copy</button></div></li>
+      </ol>
+      <div class="done"><b>Done when</b>CLAUDE.md is under 30 lines and contains at least one line that came from something that actually happened, and the feature works (<code>npm test</code> is green, or the page shows it).</div>
+      <details><summary>Stretch, Compound, Stuck?</summary><div class="body">
+        <ul><li>Run <code>/compact</code> in the middle of the build and carry on.</li><li>Add <code>.claude/rules/api.md</code> scoped to <code>app/src/api/</code>.</li><li>Run <code>/memory</code> to see what auto memory kept.</li></ul>
+        <p><b>Compound:</b> the thing you had to say twice: a CLAUDE.md line, or a rules file if it only applies to one folder.</p>
+        <p><b>Stuck?</b> Take the finished state from the next tag:</p>
+        <div class="cmd"><pre><code>git fetch upstream --tags
+git checkout ex3-start -- SPEC.md CLAUDE.md app</code></pre><button class="copy" aria-label="Copy the E2b catch-up command" data-copy="git fetch upstream --tags && git checkout ex3-start -- SPEC.md CLAUDE.md app">copy</button></div>
+      </div></details>
+    </article>
+
+    <article class="card">
+      <div class="head"><h3>E3 · Build your own skill</h3><span class="meta">block 3 · 15 min · <code>exercises/03-your-skill.md</code></span></div>
+      <p class="goal">In this exercise we will write a skill and run it twice: once to see what it got wrong, once more after fixing the skill rather than the prompt. A task you repeat at work, or adding a chart to your dashboard as the fallback. The instructor demos <code>/check</code> and the Stop hook from the toolkit; both are stretches here.</p>
+      <ol class="steps">
+        <li>Think of a task you do repeatedly. Fallback: add a chart to your dashboard</li>
+        <li><code>/skill-creator</code>, or write <code>SKILL.md</code> by hand: task, input, desired output<div class="prompt"><span class="ptext">Create a skill &lt;name&gt;. Given &lt;input&gt;, it &lt;does the task&gt; and finishes by &lt;how it shows the result&gt;. Description: when to use it, one sentence.</span><button class="copy" aria-label="Copy the E3 step 2 prompt" data-copy="Create a skill &lt;name&gt;. Given &lt;input&gt;, it &lt;does the task&gt; and finishes by &lt;how it shows the result&gt;. Description: when to use it, one sentence.">copy</button></div></li>
+        <li>Run it: <code>/your-skill</code></li>
+        <li>What did it get wrong? Fix the skill, not the prompt. Run it again</li>
+      </ol>
+      <div class="done"><b>Done when</b>The skill has run twice and the second run needed no correction from you.</div>
+      <details><summary>Stretch, Compound, Stuck?</summary><div class="body">
+        <ul><li>Make the skill prove its result: a test, a request, the page opened.</li><li>Copy <code>toolkit/skills/check/</code> into <code>.claude/skills/</code>, change the two <code>ADAPT:</code> lines, and run <code>/check</code> on the E2b feature. Expect one FAIL (issue #5); fix it so <code>/check</code> is green before E4.</li><li>The Stop hook from <code>toolkit/hooks/stop-run-tests.json</code>: break a test, ask Claude to finish, watch it refuse.</li><li><code>/skill-doctor</code> if your CLI has it.</li></ul>
+        <p><b>Compound:</b> which check do you re-run by hand before you trust a change? Write only its <code>description:</code> line.</p>
+        <p><b>Stuck?</b> Take the finished state from the next tag:</p>
+        <div class="cmd"><pre><code>git fetch upstream --tags
+git checkout ex4-start -- .claude/skills app .claude/settings.json</code></pre><button class="copy" aria-label="Copy the E3 catch-up command" data-copy="git fetch upstream --tags && git checkout ex4-start -- .claude/skills app .claude/settings.json">copy</button></div>
+      </div></details>
+    </article>
+
+    <article class="card">
+      <div class="head"><h3>E4 · Two in parallel, one reviewer</h3><span class="meta">block 4 · 20 min · <code>exercises/04-two-in-parallel.md</code></span></div>
+      <p class="goal">In this exercise we will run two Claude sessions at once, each building a change in its own worktree, and review each PR from an HTML walkthrough instead of the diff. Two dashboard features, or issues #2 and #4 if you want acceptance lists that are already written. Those two change the same create handler on purpose, so the second merge either conflicts or needs a careful look.</p>
+      <ol class="steps">
+        <li>Pick two small things: issues #2 and #4 in the repo, or two dashboard features</li>
+        <li>Two terminals, <code>claude --worktree ex4-&lt;n&gt;</code> in each: "implement it, run the tests, open a PR"<div class="prompt"><span class="ptext">Implement issue #&lt;n&gt; (or: &lt;the feature&gt;). Run the tests before you report done. Open a PR with gh when green. Touch nothing the task does not need.</span><button class="copy" aria-label="Copy the E4 step 2 prompt" data-copy="Implement issue #&lt;n&gt; (or: &lt;the feature&gt;). Run the tests before you report done. Open a PR with gh when green. Touch nothing the task does not need.">copy</button></div></li>
+        <li>A third session: "review PR #n and write an HTML walkthrough I can read without the diff"<div class="prompt"><span class="ptext">Review PR #&lt;n&gt; against its acceptance list. Then write a single-file HTML walkthrough at reviews/pr-&lt;n&gt;.html: what changed and why, each acceptance line and how it was verified, the risky parts, your findings by severity. Code only where a reader needs it.</span><button class="copy" aria-label="Copy the E4 step 3 prompt" data-copy="Review PR #&lt;n&gt; against its acceptance list. Then write a single-file HTML walkthrough at reviews/pr-&lt;n&gt;.html: what changed and why, each acceptance line and how it was verified, the risky parts, your findings by severity. Code only where a reader needs it.">copy</button></div></li>
+        <li>Read the walkthrough, not the diff. Merge, or send it back</li>
+      </ol>
+      <div class="done"><b>Done when</b>Two PRs are open, you have read one walkthrough, and at least one PR is merged or sent back with findings.</div>
+      <details><summary>Stretch, Compound, Stuck?, long form</summary><div class="body">
+        <ul><li><code>toolkit/agents/reviewer.md</code> as the reviewer, <code>/code-review</code> alongside it, <code>pr-triage</code> when there are more PRs than you have time for.</li><li>Issue #6 as a third worker: your E1 dashboard served at <code>/stats</code>.</li><li><code>WORKFLOW.md</code> in eight lines.</li><li>Take over a worker from your phone with Remote Control.</li></ul>
+        <p><b>Long form</b> (<code>exercises/04-long-form.md</code>, 45 min): three issues, the reviewer agent, merges that collide, <code>WORKFLOW.md</code>. For after the day, or for a group that finished the short form early. The walkthroughs land in <code>reviews/</code>, which is gitignored.</p>
+        <p><b>Compound:</b> the reviewer's top finding: which CLAUDE.md rule or which test would have prevented it?</p>
+        <p><b>Stuck?</b> Take the finished state from the next tag:</p>
+        <div class="cmd"><pre><code>git fetch upstream --tags
+git checkout ex5-start -- .claude/agents WORKFLOW.md</code></pre><button class="copy" aria-label="Copy the E4 catch-up command" data-copy="git fetch upstream --tags && git checkout ex5-start -- .claude/agents WORKFLOW.md">copy</button></div>
+      </div></details>
+    </article>
+
+    <article class="card">
+      <div class="head"><h3>E5 · A goal that runs without you</h3><span class="meta">block 4 · 10-minute demo · take-home by Friday · <code>exercises/05-take-home.md</code></span></div>
+      <p class="goal">In this exercise we will hand Claude a goal instead of a task: an end state, a check and a bound. Part A is a demo the instructor runs on this repo with issue #7 and <code>toolkit/goals/lint-debt.md</code>. Part B is yours, in a repo of your own, by Friday.</p>
+      <p class="goal"><b>Part A, the demo the instructor runs:</b></p>
+      <ol class="steps">
+        <li>One goal, three lines: end state, check, bound</li>
+        <li><code>/goal</code> with the three lines inline. Watch the evaluator's verdict each turn<div class="prompt"><span class="ptext">/goal &lt;end state&gt;. Check: &lt;check&gt;. &lt;bound, for example &quot;or stop after 8 turns&quot;&gt;</span><button class="copy" aria-label="Copy the E5 step 2 prompt" data-copy="/goal &lt;end state&gt;. Check: &lt;check&gt;. &lt;bound, for example &quot;or stop after 8 turns&quot;&gt;">copy</button></div></li>
+        <li><code>loop.md</code> in the repo root, then <code>/loop</code> "read loop.md and run one iteration"<div class="prompt"><span class="ptext">/loop Read loop.md and run one iteration</span><button class="copy" aria-label="Copy the E5 step 3 prompt" data-copy="/loop Read loop.md and run one iteration">copy</button></div></li>
+        <li><code>/reflect</code> writes REFLECTION.md. One lesson goes into CLAUDE.md</li>
+      </ol>
+      <div class="done"><b>Done when</b>The goal ran at least one evaluated turn in your own repo, and <code>REFLECTION.md</code> exists there.</div>
+      <details><summary>Take-home steps, Stretch, Stuck?</summary><div class="body">
+        <p><b>Take-home:</b> copy <code>check</code>, the reviewer and <code>loop.md</code> from the toolkit into a repo of yours · write one goal · run <code>/goal</code> with it and stop at the bound · run <code>/reflect</code>, then put one lesson into CLAUDE.md. Stop 9 has it as a checklist.</p>
+        <ul><li><code>/schedule</code> the loop nightly.</li><li>The six-step cadence in <code>toolkit/loop/README.md</code>: groom, build, verify, triage, reflect, prep; deciding what is ready and merging stay human.</li><li><code>/loop 30m …</code> runs it on a clock.</li></ul>
+        <p>Label one issue <code>ready</code> before the loop step; the loop only builds <code>ready</code> items. <code>/goal</code> needs a trusted workspace.</p>
+        <p><b>Stuck?</b> Take the finished state from the next tag:</p>
+        <div class="cmd"><pre><code>git fetch upstream --tags
+git checkout ex5-done -- goals loop.md REFLECTION.md CLAUDE.md</code></pre><button class="copy" aria-label="Copy the E5 catch-up command" data-copy="git fetch upstream --tags && git checkout ex5-done -- goals loop.md REFLECTION.md CLAUDE.md">copy</button></div>
+      </div></details>
+    </article>
+
+  </div>
+  <div class="pager"><button data-go="prev">← The files</button><span class="kbd-hint">Stop 4 of 9</span><button data-go="next">Next: The app →</button></div>
+</section>
+
+<!-- 5 ─────────────────────────────────────────────── -->
+<section class="stop" id="stop-app" hidden>
+  <div class="eyebrow">Stop 5 · The app: linkr</div>
+  <h2>A link shortener small enough to read in ten minutes</h2>
+  <p class="lede"><code>node:http</code>, a JSON-file store, no runtime dependencies. Two pages, three API routes, a redirect. It is here to practise on, and some of its defects are on purpose.</p>
+  <div class="split">
+    <div class="cmd"><pre><code>npm run seed       # load data/*.csv into the store
+npm run dev        # http://localhost:3000  (PORT env to change)
+npm test           # vitest, 27 tests, under 5 s
+npm run lint       # biome; 37 warnings are expected to start with
+npm run typecheck  # tsc --noEmit; CI runs it too</code></pre><button class="copy" aria-label="Copy the seed and dev commands" data-copy="npm run seed && npm run dev">copy seed + dev</button></div>
+    <div class="prose">
+      <p><strong>Seed before dev.</strong> The server reads the store once at start. If you seed while it is running, the next write overwrites what you seeded; <code>npm run seed</code> says so.</p>
+      <p><strong>The store</strong> is <code>.data/store.json</code>, gitignored, written atomically. <code>LINKR_STORE</code> points it somewhere else; the check script uses a throwaway one.</p>
+    </div>
+  </div>
+  <div class="tablewrap"><table>
+    <thead><tr><th scope="col">route</th><th scope="col">what it does</th></tr></thead>
+    <tbody>
+      <tr><td class="mono">POST /links</td><td><code>{ "target_url": "https://…" }</code> → <code>201 { slug, target_url, created_at }</code>; a body over 64 KB gets 413. A bad URL is accepted today: issue #5.</td></tr>
+      <tr><td class="mono">GET /:slug</td><td>Records the click, 302 to the target; 404 when unknown. HEAD redirects without counting.</td></tr>
+      <tr><td class="mono">GET /api/links</td><td>Every link as JSON, newest first; after seeding each carries <code>owner</code> and <code>campaign_id</code>.</td></tr>
+      <tr><td class="mono">GET /api/stats?since=</td><td><code>{ total_clicks, top_links, by_day, by_referrer }</code>; <code>since</code> is <code>YYYY-MM-DD</code> or a UTC datetime, anything else is 400.</td></tr>
+      <tr><td class="mono">GET /  ·  GET /links</td><td>Create a link · list links. Every GET also answers HEAD; a wrong method on a known path is 405 with <code>Allow</code>; an unknown path under <code>/api/</code> is a JSON 404.</td></tr>
+    </tbody>
+  </table></div>
+  <div class="prose">
+    <h3>Where things live</h3>
+    <p><code>server.ts</code> routes and startup · <code>api/links.ts</code> the three API handlers, and the file issues #2 and #4 both change · <code>redirect.ts</code> the click · <code>store.ts</code> the file · <code>validate.ts</code> slug and URL rules, where issue #5 lives · <code>web/</code> the two pages.</p>
+    <h3>Known to be wrong to start with</h3>
+    <p>Issue #5: <code>not a url</code> returns 201, the one FAIL row <code>/check</code> shows. Issue #7: 37 Biome warnings; <code>npm run lint</code> passes, <code>--error-on-warnings</code> does not. Issue #8: <code>app/README.md</code> documents a <code>--port</code> flag, but only <code>PORT</code> is read.</p>
+  </div>
+  <div class="pager"><button data-go="prev">← The exercises</button><span class="kbd-hint">Stop 5 of 9</span><button data-go="next">Next: The backlog →</button></div>
+</section>
+
+<!-- 6 ─────────────────────────────────────────────── -->
+<section class="stop" id="stop-backlog" hidden>
+  <div class="eyebrow">Stop 6 · The backlog</div>
+  <h2>Eight issues, each with an acceptance list</h2>
+  <p class="lede"><code>scripts/seed-issues.sh</code> creates them in your repo with these labels, and warns if GitHub numbers one differently from the backlog (the exercises say #1 to #8). Filter by the exercise that uses them.</p>
+  <div class="chips" id="filters" role="group" aria-label="Filter issues by label">
+    <button class="chip" data-f="all" aria-pressed="true">all</button>
+    <button class="chip" data-f="ex2" aria-pressed="false">ex2 · E2a/E2b</button>
+    <button class="chip" data-f="ex3" aria-pressed="false">ex3 · E3</button>
+    <button class="chip" data-f="ex4" aria-pressed="false">ex4 · E4</button>
+    <button class="chip" data-f="ex4-alt" aria-pressed="false">ex4-alt</button>
+    <button class="chip" data-f="ex5" aria-pressed="false">ex5 · demo and take-home</button>
+  </div>
+  <div class="issues" id="issues">
+    <article class="issue" data-labels="ex2"><span class="num">#1</span><h3>Links can expire</h3><p>Optional <code>expires_at</code> on create; after that, <code>GET /:slug</code> is 410 with a small page and records no click. The open question the E2a interview should reach: what happens to an expired link's stats?</p><span class="use">E2a spec, then E2b build</span></article>
+    <article class="issue" data-labels="ex4"><span class="num">#2</span><h3>Custom aliases</h3><p>A user-chosen slug on create: 3 to 32 characters, letters, digits, <code>-</code> and <code>_</code>; reserved words are 400; a taken slug is 409. <code>/MyLink</code> and <code>/mylink</code> resolve to the same target.</p><span class="use">E4 · changes the same file as #4</span></article>
+    <article class="issue" data-labels="ex4-alt"><span class="num">#3</span><h3>CSV export of stats</h3><p><code>GET /api/stats.csv?since=</code> with the same numbers as the JSON. The E4 substitute for anyone who built E1 on <code>data/alt/</code>.</p><span class="use">E4 · instead of #6</span></article>
+    <article class="issue" data-labels="ex4"><span class="num">#4</span><h3>Rate-limit link creation</h3><p>N <code>POST /links</code> per minute per client IP, default 10; over the limit 429 with <code>Retry-After</code>. Reads are never limited.</p><span class="use">E4 · changes the same file as #2</span></article>
+    <article class="issue" data-labels="ex3 ex4"><span class="num">#5</span><h3>Bad target URL is accepted</h3><p><code>not a url</code> returns 201 today. Only <code>http:</code> and <code>https:</code> are valid. This is the one FAIL row <code>/check</code> shows to start with; an E3 stretch fixes it before E4.</p><span class="use">E3 stretch · fix before E4</span></article>
+    <article class="issue" data-labels="ex4"><span class="num">#6</span><h3>Serve my dashboard at /stats with live numbers</h3><p>Take <code>dashboard/index.html</code>, serve it at <code>GET /stats</code>, and fetch <code>/api/stats</code> instead of reading CSV. Seed before starting the server.</p><span class="use">E4 stretch · a step of the long form</span></article>
+    <article class="issue" data-labels="ex5"><span class="num">#7</span><h3>Lint debt to zero</h3><p>37 Biome warnings: unused imports and variables, <code>any</code>, non-null assertions. <code>npx biome lint . --error-on-warnings</code> must exit 0 with no <code>biome-ignore</code> comments and no behaviour change.</p><span class="use">the E5 demo goal (lint-debt.md)</span></article>
+    <article class="issue" data-labels="ex5"><span class="num">#8</span><h3>README documents --port, which doesn't exist</h3><p><code>app/README.md</code> says the server takes <code>--port</code>; only <code>PORT</code> is read. Make the docs match the code and check every command runs as written.</p><span class="use">the docs-drift goal in the toolkit</span></article>
+  </div>
+  <div class="pager"><button data-go="prev">← The app</button><span class="kbd-hint">Stop 6 of 9</span><button data-go="next">Next: The toolkit →</button></div>
+</section>
+
+<!-- 7 ─────────────────────────────────────────────── -->
+<section class="stop" id="stop-toolkit" hidden>
+  <div class="eyebrow">Stop 7 · The toolkit</div>
+  <h2>Reference implementations you copy in when you want them</h2>
+  <p class="lede">Claude Code only loads what sits under <code>.claude/</code>. <code>cp -r toolkit/skills/check .claude/skills/</code> and the skill is live in your session within seconds; <code>/skills</code> shows what loaded.</p>
+  <div class="tablewrap"><table>
+    <thead><tr><th scope="col">shape</th><th scope="col">what it is</th><th scope="col">when it is the right one</th><th scope="col">cost</th></tr></thead>
+    <tbody>
+      <tr><td><b>Skill</b></td><td>Instructions the agent follows when you run <code>/name</code> or when its description matches what you asked</td><td>A repeatable procedure that needs judgement</td><td>The description is in context always; the body only when used</td></tr>
+      <tr><td><b>Hook</b></td><td>A command that always runs on an event; exit 2 blocks it with a message the agent reads</td><td>A check that must not be skippable</td><td>Zero context</td></tr>
+      <tr><td><b>Subagent</b></td><td>An agent definition with its own clean context and tool list; returns a result, not a transcript</td><td>The checker must not share the writer's context, or work you want to fan out</td><td>Isolated; the result is summarised back</td></tr>
+    </tbody>
+  </table></div>
+  <div class="groups">
+    <div class="group"><h3>skills/</h3><dl>
+      <dt>check</dt><dd>The app's full check: tests, lint, live endpoints, one page, as a PASS/FAIL table with evidence on every row. Two <code>ADAPT:</code> lines to change. Not Claude Code's built-in <code>/verify</code>, which drives the app and records its own recipe; this one prints the table the reviewer and the loop gate on.</dd>
+      <dt>run-app</dt><dd>Start the app on a free port, print the URL, stop it.</dd>
+      <dt>add-chart</dt><dd>Adds a chart to the dashboard in the pattern the file already uses. A finished version of the E3 fallback; write yours first.</dd>
+      <dt>dataset-profile</dt><dd>Profiles every CSV in a folder, including values whose shape differs from the majority. An E1 stretch.</dd>
+      <dt>handoff</dt><dd>Writes a handoff note. An example of a personal skill.</dd>
+      <dt>pr-walkthrough</dt><dd>A single-file HTML walkthrough of a PR, readable without the diff. The E4 move as a skill.</dd>
+      <dt>the loop skills</dt><dd><code>reflect</code>, <code>groom</code>, <code>groom-prep</code> and <code>pr-triage</code>: the four skills that make a loop repeatable.</dd>
+    </dl></div>
+    <div class="group"><h3>agents/</h3><dl>
+      <dt>reviewer.md</dt><dd>Reviews a diff against the issue's acceptance list, runs the check script, exercises every line literally, returns findings by severity with file:line, never edits. Read-only by instruction; Bash stays for git and gh.</dd>
+      <dt>researcher.md</dt><dd>A read-only mapper for "where does X happen" questions. Read-only by construction: no Edit, Write or Bash.</dd>
+    </dl></div>
+    <div class="group"><h3>hooks/</h3><dl>
+      <dt>stop-run-tests</dt><dd>Stop: runs <code>npm test</code>; on red it exits 2 with "tests red, not done". Bounded to three blocks per session. The instructor's demo in block 3, and an E3 stretch.</dd>
+      <dt>post-edit-format</dt><dd>PostToolUse on Edit and Write: Biome formats the file. Never blocks.</dd>
+      <dt>notify-done</dt><dd>Stop: a macOS notification when a turn ends.</dd>
+    </dl></div>
+    <div class="group"><h3>goals/ · loop/ · scripts/ · ideas/</h3><dl>
+      <dt>goals/</dt><dd><code>TEMPLATE.md</code> plus <code>lint-debt</code> (the E5 demo), <code>docs-drift</code> (issue #8), <code>endpoint-tests</code> (green to start with; for after you add a route).</dd>
+      <dt>loop/</dt><dd><code>loop.md</code>, the playbook a repo keeps: WIP cap, gates, evidence rules, six steps. The README names the two steps that stay human.</dd>
+      <dt>scripts/</dt><dd><code>check-docs-drift.sh</code> and <code>check-endpoint-tests.sh</code>, the checks behind two of the goals.</dd>
+      <dt>ideas/</dt><dd>Twenty one-line personal skill ideas for E3.</dd>
+    </dl></div>
+  </div>
+  <div class="cmd"><pre><code>cp -r toolkit/skills/check .claude/skills/          # then edit the two ADAPT: lines
+cp toolkit/agents/reviewer.md .claude/agents/
+cat toolkit/hooks/stop-run-tests.json                # merge into .claude/settings.json
+cp toolkit/goals/TEMPLATE.md goals/&lt;name&gt;.md         # then fill in the three lines</code></pre><button class="copy" aria-label="Copy the check and reviewer commands" data-copy="cp -r toolkit/skills/check .claude/skills/ && cp toolkit/agents/reviewer.md .claude/agents/">copy check + reviewer</button></div>
+  <div class="pager"><button data-go="prev">← The backlog</button><span class="kbd-hint">Stop 7 of 9</span><button data-go="next">Next: Solutions and tags →</button></div>
+</section>
+
+<!-- 8 ─────────────────────────────────────────────── -->
+<section class="stop" id="stop-solutions" hidden>
+  <div class="eyebrow">Stop 8 · Solutions and tags</div>
+  <h2>Five finished states, one tag each</h2>
+  <p class="lede">The <code>solutions</code> branch on upstream sits on top of <code>main</code> with one commit per finished exercise, each tagged. A Stuck? line takes only the named paths from the next tag, so if you are behind you get exactly the state the next exercise needs and nothing else.</p>
+  <div class="chain">
+    <div class="node root"><span class="tag">main</span><span class="state">What you cloned</span></div>
+    <div class="node"><span class="tag">ex2-start</span><span class="state">E1 done: the dashboard</span></div>
+    <div class="node"><span class="tag">ex3-start</span><span class="state">E2a and E2b done: links can expire (issue #1), SPEC.md, PLAN.md, a 21-line CLAUDE.md</span></div>
+    <div class="node"><span class="tag">ex4-start</span><span class="state">E3 done: check adapted, the Stop hook, add-chart, issue #5 fixed</span></div>
+    <div class="node"><span class="tag">ex5-start</span><span class="state">E4 long form done: the reviewer, WORKFLOW.md, issues #2, #4 and #6 merged, /stats live</span></div>
+    <div class="node"><span class="tag">ex5-done</span><span class="state">The day done: lint debt at zero, loop.md with the four loop skills, REFLECTION.md. Issue #8 stays open for the docs-drift goal</span></div>
+  </div>
+  <div class="tablewrap"><table>
+    <thead><tr><th scope="col">tag</th><th scope="col">catches you up for</th><th scope="col">the Stuck? line</th></tr></thead>
+    <tbody>
+      <tr><td class="mono">ex2-start</td><td>E2a</td><td class="mono">git checkout ex2-start -- dashboard</td></tr>
+      <tr><td class="mono">ex3-start</td><td>E2b, or E3</td><td class="mono">git checkout ex3-start -- SPEC.md CLAUDE.md app</td></tr>
+      <tr><td class="mono">ex4-start</td><td>E4</td><td class="mono">git checkout ex4-start -- .claude/skills app .claude/settings.json</td></tr>
+      <tr><td class="mono">ex5-start</td><td>E5</td><td class="mono">git checkout ex5-start -- .claude/agents WORKFLOW.md</td></tr>
+      <tr><td class="mono">ex5-done</td><td>after the day</td><td class="mono">git checkout ex5-done -- goals loop.md REFLECTION.md CLAUDE.md</td></tr>
+    </tbody>
+  </table></div>
+  <div class="prose"><p>Run <code>git fetch upstream --tags</code> first if the tag is not there yet. Every tag passes <code>npm test</code> and the typecheck. To look at a finished state without touching your own work, put it in a separate folder:</p></div>
+  <div class="cmd"><pre><code>git worktree add ../bootcamp-solutions ex5-done &amp;&amp; cd ../bootcamp-solutions &amp;&amp; npm ci</code></pre><button class="copy" aria-label="Copy the worktree command" data-copy="git worktree add ../bootcamp-solutions ex5-done && cd ../bootcamp-solutions && npm ci">copy</button></div>
+  <div class="pager"><button data-go="prev">← The toolkit</button><span class="kbd-hint">Stop 8 of 9</span><button data-go="next">Next: Take it home →</button></div>
+</section>
+
+<!-- 9 ─────────────────────────────────────────────── -->
+<section class="stop" id="stop-home" hidden>
+  <div class="eyebrow">Stop 9 · Take it home</div>
+  <h2>One loop by Friday, in a repo of your own</h2>
+  <p class="lede">The day ends with the demo. The take-home is the same four steps, in a repo you actually work in. Tick them off here; this page remembers in your browser.</p>
+  <div class="check" id="checklist">
+    <label><input type="checkbox" id="c1"><span>Copy <code>check</code>, the <code>reviewer</code> agent and <code>loop.md</code> from <code>toolkit/</code> into a repo of yours. Change the two <code>ADAPT:</code> lines in check; fill in the brackets in loop.md.</span></label>
+    <label><input type="checkbox" id="c2"><span>Write one goal, three lines: end state, check, bound. <code>toolkit/goals/TEMPLATE.md</code> is the shape.</span></label>
+    <label><input type="checkbox" id="c3"><span>Run <code>/goal</code> with it. Stop at the bound.</span></label>
+    <label><input type="checkbox" id="c4"><span>Run <code>/reflect</code>, then put one lesson into <code>CLAUDE.md</code>.</span></label>
+  </div>
+  <div class="done"><b>Done when</b>The goal ran at least one evaluated turn in your own repo, and <code>REFLECTION.md</code> exists there.</div>
+  <div class="prose">
+    <h3>What you should have by then</h3>
+  </div>
+  <ul class="plain">
+    <li>A <code>CLAUDE.md</code> where every line came from something that happened.</li>
+    <li>One skill you wrote, under <code>.claude/skills/</code>.</li>
+    <li><code>check</code> adapted to your app, and a Stop hook if you want the tests to be unskippable.</li>
+    <li><code>reviewer.md</code> under <code>.claude/agents/</code>, and a <code>WORKFLOW.md</code> that says how agent work ships.</li>
+    <li>A goal in <code>goals/</code>, a <code>loop.md</code>, and the first entry in <code>REFLECTION.md</code>.</li>
+  </ul>
+  <div class="prose">
+    <h3>If you want more</h3>
+  </div>
+  <ul class="plain">
+    <li><code>/schedule</code> the loop nightly: the same <code>loop.md</code>, on a cron instead of in your terminal.</li>
+    <li>Read <code>toolkit/loop/README.md</code>: the six-step cadence and the two steps that stay human.</li>
+    <li>Run the long form of E4 (<code>exercises/04-long-form.md</code>): three issues, merges that collide, and a reviewer that has to earn its findings.</li>
+  </ul>
+  <div class="pager"><button data-go="prev">← Solutions and tags</button><span class="kbd-hint">Stop 9 of 9</span><button disabled>End of guide</button></div>
+</section>
+
+</main>
+</div>
+</div>
+
+<script>
+(function(){
+  const STOPS=['start','day','files','exercises','app','backlog','toolkit','solutions','home'];
+  const rail=document.querySelector('nav.rail');
+  const progText=document.getElementById('prog-text'), progBar=document.getElementById('prog-bar');
+  function store(k,v){ try{ localStorage.setItem(k,v);}catch(e){} }
+  function read(k){ try{ return localStorage.getItem(k);}catch(e){ return null; } }
+  function show(id, push, scroll){
+    if(!STOPS.includes(id)) id=STOPS[0];
+    STOPS.forEach(s=>{ document.getElementById('stop-'+s).hidden = (s!==id); });
+    rail.querySelectorAll('button').forEach(b=>b.setAttribute('aria-current', b.dataset.stop===id ? 'true':'false'));
+    const cur=rail.querySelector('[aria-current="true"]');
+    if(cur && rail.scrollWidth>rail.clientWidth){ const rr=rail.getBoundingClientRect(), br=cur.getBoundingClientRect(); rail.scrollLeft += (br.left+br.width/2)-(rr.left+rr.width/2); }
+    const i=STOPS.indexOf(id);
+    progText.textContent='Stop '+(i+1)+' of '+STOPS.length;
+    progBar.style.width=Math.round((i+1)/STOPS.length*100)+'%';
+    store('guide-stop', id);
+    if(push!==false){ try{ history.replaceState(null,'','#'+id);}catch(e){} }
+    if(scroll!==false) window.scrollTo({top:0, behavior: matchMedia('(prefers-reduced-motion: reduce)').matches?'auto':'smooth'});
+  }
+  function current(){ return STOPS.find(s=>!document.getElementById('stop-'+s).hidden) || STOPS[0]; }
+  function step(d){ const i=STOPS.indexOf(current())+d; if(i>=0&&i<STOPS.length) show(STOPS[i]); }
+  rail.addEventListener('click', e=>{ const b=e.target.closest('button[data-stop]'); if(b) show(b.dataset.stop); });
+  document.addEventListener('click', e=>{ const b=e.target.closest('button[data-go]'); if(b) step(b.dataset.go==='next'?1:-1); });
+  document.addEventListener('keydown', e=>{
+    if(e.altKey||e.metaKey||e.ctrlKey||e.shiftKey) return;
+    if(e.target!==document.body && !e.target.closest('nav.rail,.pager')) return;
+    if(e.key==='ArrowRight') step(1); else if(e.key==='ArrowLeft') step(-1);
+  });
+  const fromHash=(location.hash||'').replace(/^#/,'');
+  if(STOPS.includes(fromHash)) show(fromHash, false, false); else show(read('guide-stop')||STOPS[0], true, false);
+  window.addEventListener('hashchange', ()=>{ const h=(location.hash||'').replace(/^#/,''); if(STOPS.includes(h)&&h!==current()) show(h,false,false); });
+
+  // file tree
+  const tree=document.getElementById('tree'), detail=document.getElementById('detail');
+  tree.addEventListener('click', e=>{
+    const b=e.target.closest('button'); if(!b) return;
+    if(b.classList.contains('dir')){
+      const open=b.getAttribute('aria-expanded')==='true';
+      b.setAttribute('aria-expanded', open?'false':'true');
+      const ul=b.nextElementSibling; if(ul) ul.hidden=open;
+    }
+    tree.querySelectorAll('button[aria-current]').forEach(x=>x.removeAttribute('aria-current'));
+    b.setAttribute('aria-current','true');
+    detail.innerHTML='';
+    const p=document.createElement('span'); p.className='path'; p.textContent=b.dataset.d;
+    const d=document.createElement('p'); d.textContent=b.dataset.desc;
+    detail.append(p,d);
+  });
+
+  // issue filters
+  const filters=document.getElementById('filters'), issues=document.getElementById('issues');
+  filters.addEventListener('click', e=>{
+    const c=e.target.closest('.chip'); if(!c) return;
+    filters.querySelectorAll('.chip').forEach(x=>x.setAttribute('aria-pressed', x===c?'true':'false'));
+    const f=c.dataset.f;
+    issues.querySelectorAll('.issue').forEach(it=>{ it.hidden = !(f==='all' || it.dataset.labels.split(' ').includes(f)); });
+  });
+
+  // copy buttons
+  document.addEventListener('click', e=>{
+    const b=e.target.closest('.copy'); if(!b) return;
+    const text=b.dataset.copy; const label=b.textContent;
+    const done=()=>{ b.classList.add('did'); b.textContent='copied'; setTimeout(()=>{ b.classList.remove('did'); b.textContent=label; },1400); };
+    function fallback(){
+      const pre=b.parentElement.querySelector('pre,.ptext'); if(!pre) return;
+      const r=document.createRange(); r.selectNodeContents(pre); const s=getSelection(); s.removeAllRanges(); s.addRange(r);
+      b.textContent='select and copy'; setTimeout(()=>{ b.textContent=label; },1800);
+    }
+    if(navigator.clipboard && navigator.clipboard.writeText){
+      navigator.clipboard.writeText(text).then(done).catch(fallback);
+    } else fallback();
+  });
+
+  // take-home checklist persistence
+  document.querySelectorAll('#checklist input').forEach(cb=>{
+    if(read('guide-'+cb.id)==='1') cb.checked=true;
+    cb.addEventListener('change', ()=>store('guide-'+cb.id, cb.checked?'1':'0'));
+  });
+})();
+</script>
+
+</body>
+</html>

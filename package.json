@@ -1,0 +1,26 @@
+{
+  "name": "linkr",
+  "version": "0.1.0",
+  "private": true,
+  "description": "A small link shortener with click stats. The practice app for the Claude Code for Developers bootcamp.",
+  "type": "module",
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "dev": "tsx app/src/server.ts",
+    "test": "vitest run",
+    "lint": "biome lint .",
+    "lint:fix": "biome lint --write .",
+    "typecheck": "tsc --noEmit",
+    "format": "biome format --write .",
+    "seed": "tsx scripts/seed.ts"
+  },
+  "devDependencies": {
+    "@biomejs/biome": "^2.4.0",
+    "@types/node": "^22.20.4",
+    "tsx": "^4.20.0",
+    "typescript": "^5.9.0",
+    "vitest": "^4.1.11"
+  }
+}
