@@ -5,7 +5,7 @@
   "description": "A small link shortener with click stats. The practice app for the Claude Code for Developers bootcamp.",
   "type": "module",
   "engines": {
-    "node": ">=22"
+    "node": "^22.23.4 || ^24.22.1 || >=26.12.1"
   },
   "scripts": {
     "dev": "tsx app/src/server.ts",
